@@ -56,7 +56,7 @@ FARM_ORIGIN_Y  = TOPBAR_H + 10   # = 120
 # Card geometry
 CARD_W, CARD_H = 118, 163
 CARD_GAP       = 14
-HAND_Y = TOPBAR_H + MAIN_H + (HAND_H - CARD_H) // 2   # = 538
+HAND_Y = TOPBAR_H + MAIN_H + 8
 HAND_PANEL_X = 226
 HAND_PANEL_W = 832
 

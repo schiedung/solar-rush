@@ -6,6 +6,7 @@ import ui.colors as C
 import ui.fonts as F
 import ui.layout as L
 import ui.assets as A
+from ui.hand_view import _card_badge
 
 
 def _dim_screen(surf: pygame.Surface) -> None:
@@ -80,8 +81,8 @@ def draw_research_choose(
         )
         surf.blit(area_surf, (rect.centerx - area_surf.get_width() // 2, rect.y + 36))
 
-        tier_surf = F.get('tiny').render('★' * card.tier, True, C.TEXT_GOLD)
-        surf.blit(tier_surf, (rect.centerx - tier_surf.get_width() // 2, rect.y + 54))
+        badge_surf = F.get('bold').render(_card_badge(card), True, C.WHITE)
+        surf.blit(badge_surf, (rect.centerx - badge_surf.get_width() // 2, rect.y + 52))
 
         art_rect = pygame.Rect(rect.x + 10, rect.y + 76, rect.width - 20, 76)
         art = A.get_card_image(card.id, art_rect.width, art_rect.height)

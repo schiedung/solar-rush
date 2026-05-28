@@ -8,6 +8,30 @@ import ui.layout as L
 import ui.assets as A
 
 
+def _card_badge(card: Card) -> str:
+    etype = card.effect.get('type', '')
+    if card.is_slot_card():
+        return f"×{_slot_multiplier(card):.2f}"
+    if etype == 'farm_multiplier':
+        return f"×{1.0 + card.effect.get('delta', 0):.2f}"
+    if etype == 'event_policy_subsidy':
+        return '+2 CARDS'
+    if etype.startswith('event_'):
+        return 'EVENT'
+    return ''
+
+
+def _slot_multiplier(card: Card) -> float:
+    tier = card.effect.get('to_tier', 0)
+    if card.area == 'material_science':
+        return {1: 1.30, 2: 1.60, 3: 2.00, 4: 2.80}.get(tier, 1.00)
+    if card.area == 'chemistry':
+        return {1: 1.15, 2: 1.30, 3: 1.45, 4: 1.65}.get(tier, 1.00)
+    if card.area == 'physics':
+        return {1: 1.20, 2: 1.40, 3: 1.60, 4: 1.90}.get(tier, 1.00)
+    return 1.00
+
+
 def _draw_card(
     surf: pygame.Surface,
     card: Card,
@@ -30,9 +54,9 @@ def _draw_card(
     area_lbl = F.get('tiny').render(C.AREA_LABEL.get(card.area, card.area), True, area_color)
     surf.blit(area_lbl, (band.x + 4, band.y + 4))
 
-    tier_txt = '★' * card.tier + '☆' * (3 - card.tier)
-    tier_surf = F.get('tiny').render(tier_txt, True, C.TEXT_GOLD)
-    surf.blit(tier_surf, (band.right - tier_surf.get_width() - 4, band.y + 4))
+    badge_txt = _card_badge(card)
+    badge_top = F.get('bold').render(badge_txt, True, C.WHITE)
+    surf.blit(badge_top, (band.right - badge_top.get_width() - 4, band.y + 2))
 
     name_y = rect.y + 28
     _blit_wrapped(surf, card.name, F.get('bold'), C.TEXT_MAIN, rect.x + 5, name_y, rect.width - 10, 2)
@@ -45,15 +69,7 @@ def _draw_card(
     desc_y = rect.y + 111
     _blit_wrapped(surf, card.description, F.get('tiny'), C.TEXT_DIM, rect.x + 5, desc_y, rect.width - 10, 2)
 
-    etype = card.effect.get('type', '')
-    if etype.startswith('event_'):
-        badge = F.get('tiny').render('EVENT', True, C.TEXT_RED)
-    elif etype == 'farm_multiplier':
-        delta = card.effect.get('delta', 0)
-        badge = F.get('tiny').render(f'+{int(delta*100)}% FARM', True, C.TEXT_GOLD)
-    else:
-        delta = card.effect.get('delta', 1)
-        badge = F.get('tiny').render(f'+{delta} tier', True, C.CYAN)
+    badge = F.get('bold').render(badge_txt, True, C.WHITE)
     surf.blit(badge, (rect.centerx - badge.get_width() // 2, rect.bottom - 18))
 
 
