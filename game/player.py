@@ -11,15 +11,13 @@ class Player:
     prototype: Prototype = field(default_factory=Prototype)
     units: list[float] = field(default_factory=list)   # frozen kWh per built unit
     hand: list[Card] = field(default_factory=list)
-    banked_kwh: float = 0.0
     farm_bonus: float = 0.0        # additive; total multiplier = 1.0 + farm_bonus
-    skip_score: bool = False       # Grid Failure effect
     halved_turns: int = 0          # Dust Storm effect (turns remaining)
     blocked_areas: set[str] = field(default_factory=set)
-    HAND_LIMIT: int = 6
+    block_build: bool = False      # Grid Failure effect: blocks Build for 1 turn
 
     def total_output(self) -> float:
-        """kWh earned per score phase (sum of all built units, modified by active effects)."""
+        """Current kW score — sum of all built units modified by active effects."""
         raw = sum(self.units)
         if self.halved_turns > 0:
             raw *= 0.5

@@ -7,7 +7,7 @@ from game.deck import Deck
 from game.player import Player
 
 
-RACE_TARGET_KWH = 200.0
+RACE_TARGET_KW = 20.0
 MAX_ROUNDS = 20
 
 PLAYER_COLORS = [
@@ -19,13 +19,11 @@ PLAYER_COLORS = [
 
 
 class Phase(Enum):
-    SCORE              = auto()
     ACTION             = auto()
-    TARGETING_CELL     = auto()  # upgrade card selected, waiting for cell click
+    TARGETING_CELL     = auto()  # unused — kept for future use
     TARGETING_PLAYER   = auto()  # event card selected, waiting for player click
     RESEARCH_PICK_AREA = auto()  # player clicked Research, now pick a deck
     RESEARCH_CHOOSE    = auto()  # 3 cards revealed, player picks 1
-    DISCARD            = auto()  # over hand limit, must discard
     HANDOFF            = auto()  # "Pass to Player X" screen
     GAME_OVER          = auto()
 
@@ -37,12 +35,12 @@ class GameState:
     round_number: int = 1
     current_player_idx: int = 0
     actions_remaining: int = 2
-    phase: Phase = Phase.SCORE
+    phase: Phase = Phase.ACTION
     winner: Optional[Player] = None
-    selected_card: Optional[Card] = None     # card chosen from hand to play
-    research_choices: list[Card] = field(default_factory=list)  # 3 peeked cards
-    research_area: str = ''                  # which deck was chosen for research
-    last_event_message: str = ''             # shown briefly in the UI
+    selected_card: Optional[Card] = None
+    research_choices: list[Card] = field(default_factory=list)
+    research_area: str = ''
+    last_event_message: str = ''
 
     @property
     def current_player(self) -> Player:
@@ -53,7 +51,7 @@ class GameState:
 
     def check_win(self) -> Optional[Player]:
         for p in self.players:
-            if p.banked_kwh >= RACE_TARGET_KWH:
+            if p.total_output() >= RACE_TARGET_KW:
                 return p
         return None
 

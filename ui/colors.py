@@ -1,22 +1,42 @@
-BG           = ( 12,  18,  35)
-TOPBAR_BG    = (  8,  12,  25)
-TRACK_BG     = ( 20,  30,  60)
-FARM_BG      = ( 15,  25,  48)
-PANEL_BG     = ( 18,  28,  52)
-HAND_BG      = ( 10,  16,  32)
-DIVIDER      = ( 35,  55,  95)
+# Solarized Dark palette — Ethan Schoonover
+BASE03 = (  0,  43,  54)
+BASE02 = (  7,  54,  66)
+BASE01 = ( 88, 110, 117)
+BASE00 = ( 88, 110, 117)
+BASE0  = (131, 148, 150)
+BASE1  = (147, 161, 161)
+BASE2  = (238, 232, 213)
+BASE3  = (253, 246, 227)
+
+YELLOW  = (181, 137,   0)
+ORANGE  = (203,  75,  22)
+RED     = (220,  50,  47)
+MAGENTA = (211,  54, 130)
+VIOLET  = (108, 113, 196)
+BLUE    = ( 38, 139, 210)
+CYAN    = ( 42, 161, 152)
+GREEN   = (133, 153,   0)
+
+# Semantic aliases
+BG        = BASE03
+TOPBAR_BG = BASE02
+TRACK_BG  = BASE02
+FARM_BG   = BASE03
+PANEL_BG  = BASE02
+HAND_BG   = BASE03
+DIVIDER   = (  0,  64,  76)
 
 AREA = {
-    'material_science': ( 46, 125,  50),
-    'chemistry':        ( 25, 118, 210),
-    'physics':          (230,  81,   0),
-    'engineering':      (200, 100,   0),
+    'material_science': GREEN,
+    'chemistry':        BLUE,
+    'physics':          ORANGE,
+    'engineering':      YELLOW,
 }
 AREA_DARK = {
-    'material_science': ( 15,  50,  20),
-    'chemistry':        ( 10,  40,  90),
-    'physics':          ( 90,  30,   0),
-    'engineering':      ( 85,  40,   0),
+    'material_science': ( 20,  40,   5),
+    'chemistry':        (  5,  30,  55),
+    'physics':          ( 60,  18,   5),
+    'engineering':      ( 55,  38,   0),
 }
 AREA_LABEL = {
     'material_science': 'Mat. Science',
@@ -25,31 +45,31 @@ AREA_LABEL = {
     'engineering':      'Engineering',
 }
 
-CELL_BG     = ( 22,  38,  72)
-CELL_BORDER = ( 50,  75, 130)
-CELL_TARGET = ( 60, 180,  80)
-CELL_SELECT = ( 80, 150, 220)
+CELL_BG     = ( 10,  50,  60)
+CELL_BORDER = ( 38, 100, 120)
+CELL_TARGET = CYAN
+CELL_SELECT = VIOLET
 
 TIER_COLORS = [
-    ( 55,  75, 115),
-    ( 60, 160,  60),
-    (150, 200,  50),
-    (220, 160,  30),
-    (220,  70,  70),
+    BASE01,
+    GREEN,
+    CYAN,
+    YELLOW,
+    ORANGE,
 ]
 
-TEXT_MAIN  = (220, 230, 255)
-TEXT_DIM   = (130, 145, 175)
-TEXT_GOLD  = (255, 210,  70)
-TEXT_RED   = (230,  80,  80)
-WHITE      = (255, 255, 255)
-BLACK      = (  0,   0,   0)
+TEXT_MAIN = BASE0
+TEXT_DIM  = BASE01
+TEXT_GOLD = YELLOW
+TEXT_RED  = RED
+WHITE     = BASE3
+BLACK     = BASE03
 
-BTN_NORMAL   = ( 35,  55,  95)
-BTN_HOVER    = ( 55,  80, 130)
-BTN_DISABLED = ( 22,  32,  55)
-BTN_BORDER   = ( 60,  90, 150)
-BTN_CONFIRM  = ( 25,  85,  45)
+BTN_NORMAL   = ( 10,  60,  72)
+BTN_HOVER    = ( 15,  85, 100)
+BTN_DISABLED = (  5,  40,  48)
+BTN_BORDER   = ( 42, 120, 140)
+BTN_CONFIRM  = ( 20,  80,  50)
 BTN_DANGER   = ( 90,  25,  25)
 
-OVERLAY_DIM  = ( 10,  14,  30, 210)
+OVERLAY_DIM = (  0,  43,  54, 210)

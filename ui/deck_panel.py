@@ -25,7 +25,6 @@ def _draw_button(
     pygame.draw.rect(surf, bg, rect, border_radius=8)
     pygame.draw.rect(surf, border, rect, 2, border_radius=8)
 
-    # Area color accent bar on left
     pygame.draw.rect(surf, C.AREA.get(area, C.BTN_BORDER),
                      (rect.x, rect.y, 6, rect.height), border_radius=4)
 
@@ -43,8 +42,7 @@ def _draw_button(
         tag = F.get('tiny').render('BLOCKED', True, C.TEXT_RED)
         surf.blit(tag, (rect.x + 14, rect.y + 46))
 
-    # Draw icon hint on right
-    hint = F.get('tiny').render('DRAW', True, C.TEXT_DIM if available else C.TEXT_DIM)
+    hint = F.get('tiny').render('DRAW', True, C.TEXT_DIM)
     surf.blit(hint, (rect.right - hint.get_width() - 10, rect.y + 8))
 
 
@@ -53,8 +51,6 @@ def draw(
     state: GameState,
     mouse_pos: tuple[int, int],
 ) -> None:
-    """Draw the right panel: deck buttons + action buttons."""
-    # Panel background
     pygame.draw.rect(surf, C.PANEL_BG,
                      (L.FARM_W, L.TOPBAR_H, L.PANEL_W, L.MAIN_H))
 
@@ -63,7 +59,6 @@ def draw(
     research_mode = phase == Phase.RESEARCH_PICK_AREA
     draw_mode = phase in (Phase.ACTION, Phase.RESEARCH_PICK_AREA)
 
-    # ── Deck buttons ────────────────────────────────────────────────────────
     for area in _AREAS:
         rect = L.DECK_RECTS[area]
         deck = state.decks[area]
@@ -78,30 +73,29 @@ def draw(
                      len(deck), len(deck.discard_pile),
                      mouse_pos, available, research_mode)
 
-    # ── Action buttons ───────────────────────────────────────────────────────
     can_act = phase == Phase.ACTION and state.actions_remaining > 0
+    can_build = can_act and not p.block_build
 
     _draw_action_btn(surf, L.BUILD_BTN, 'Build Cell',
-                     can_act, mouse_pos, C.BTN_CONFIRM)
+                     can_build, mouse_pos, C.BTN_CONFIRM)
     _draw_action_btn(surf, L.RESEARCH_BTN,
-                     f'Research  (costs 2)',
+                     'Research  (costs 2)',
                      can_act and state.actions_remaining >= 2, mouse_pos)
     _draw_action_btn(surf, L.PASS_BTN, 'Pass Action',
                      can_act, mouse_pos)
 
-    # Status line
     status = _status_text(state)
     st = F.get('small').render(status, True, C.TEXT_DIM)
     surf.blit(st, (L.ACTION_X, L.STATUS_TEXT_Y))
 
-    # kWh scoreboard (below action buttons)
+    # Score board — current output (kW)
     y = L.SCOREBOARD_Y
     for i, player in enumerate(state.players):
         highlight = i == state.current_player_idx
         color = player.color if highlight else C.TEXT_DIM
         arrow = '► ' if highlight else '  '
         line = F.get('body').render(
-            f'{arrow}{player.name}: {player.banked_kwh:.1f} kWh', True, color
+            f'{arrow}{player.name}: {player.total_output():.2f} kW', True, color
         )
         surf.blit(line, (L.ACTION_X, y + i * 19))
 
@@ -130,18 +124,13 @@ def _status_text(state: GameState) -> str:
     phase = state.phase
     p = state.current_player
     if phase == Phase.ACTION:
+        if p.block_build:
+            return f'Actions: {state.actions_remaining}  |  Grid Failure — Build blocked!'
         return f'Actions remaining: {state.actions_remaining}  |  Click a card, deck, or button'
-    if phase == Phase.TARGETING_CELL:
-        return f'Select a cell to upgrade with: {state.selected_card.name}'
     if phase == Phase.TARGETING_PLAYER:
         return f'Select a target player for: {state.selected_card.name}'
     if phase == Phase.RESEARCH_PICK_AREA:
         return 'Research: select a deck to peek 3 cards'
     if phase == Phase.RESEARCH_CHOOSE:
         return 'Research: click a card to keep it'
-    if phase == Phase.DISCARD:
-        discard_n = len(p.hand) - p.HAND_LIMIT
-        return f'Discard {discard_n} card(s) — click cards to discard'
-    if phase == Phase.SCORE:
-        return 'Scoring...'
     return ''

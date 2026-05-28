@@ -18,6 +18,7 @@ class UIRects:
     token_rects: list[pygame.Rect] = field(default_factory=list)
     research_rects: list[pygame.Rect] = field(default_factory=list)
     player_target_rects: list[pygame.Rect] = field(default_factory=list)
+    slot_rects: dict[str, pygame.Rect] = field(default_factory=dict)
     handoff_btn: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
     play_again_btn: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
 
@@ -27,7 +28,7 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
     rects = UIRects()
 
     rects.token_rects = track_view.draw(surf, state)
-    farm_view.draw(surf, state, mouse_pos)
+    rects.slot_rects = farm_view.draw(surf, state, mouse_pos)
     deck_panel.draw(surf, state, mouse_pos)
     rects.hand_rects = hand_view.draw(surf, state, mouse_pos)
 

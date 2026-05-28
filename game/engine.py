@@ -15,45 +15,21 @@ class TurnEngine:
     def begin_turn(self) -> None:
         s = self.state
         p = s.current_player
-        s.phase = Phase.SCORE
         s.last_event_message = ''
 
         if p.halved_turns > 0:
             p.halved_turns -= 1
 
         p.blocked_areas.clear()
-
-        if p.skip_score:
-            p.skip_score = False
-            s.last_event_message = f'{p.name}: grid failure — score skipped!'
-        else:
-            earned = p.total_output()
-            p.banked_kwh += earned
-            if earned > 0:
-                s.last_event_message = f'{p.name} earned {earned:.2f} kWh  ({len(p.units)} units)'
-            else:
-                s.last_event_message = f'{p.name} has no built units yet — build one!'
-
-        winner = s.check_win()
-        if winner:
-            s.winner = winner
-            s.phase = Phase.GAME_OVER
-            return
+        p.block_build = False
 
         s.actions_remaining = 2
         s.phase = Phase.ACTION
 
-    def begin_discard_phase(self) -> None:
-        s = self.state
-        if len(s.current_player.hand) > s.current_player.HAND_LIMIT:
-            s.phase = Phase.DISCARD
-        else:
-            self._begin_handoff()
-
     def _begin_handoff(self) -> None:
         s = self.state
         if s.round_number >= MAX_ROUNDS and s.current_player_idx == len(s.players) - 1:
-            winner = max(s.players, key=lambda p: p.banked_kwh)
+            winner = max(s.players, key=lambda p: p.total_output())
             s.winner = winner
             s.phase = Phase.GAME_OVER
         else:
@@ -94,9 +70,9 @@ class TurnEngine:
     # ── Play a card ───────────────────────────────────────────────────────────
 
     def select_card(self, card: Card) -> None:
-        """Player clicks a card in hand. Immediate cards apply instantly; events need targeting."""
+        """Player clicks a card in hand. Slot cards apply instantly and are free; events need targeting."""
         s = self.state
-        if s.phase != Phase.ACTION or s.actions_remaining <= 0:
+        if s.phase != Phase.ACTION:
             return
         if card not in s.current_player.hand:
             return
@@ -104,9 +80,10 @@ class TurnEngine:
         if card.is_immediate():
             self._apply_immediate(card)
         elif card.needs_player_target():
+            if s.actions_remaining <= 0:
+                return
             s.selected_card = card
             s.phase = Phase.TARGETING_PLAYER
-        # (no TARGETING_CELL phase needed — all slot cards are immediate)
 
     def deselect_card(self) -> None:
         s = self.state
@@ -129,8 +106,8 @@ class TurnEngine:
             target.halved_turns = 1
             s.last_event_message = f'Dust Storm hits {target.name}!'
         elif etype == 'event_grid_failure':
-            target.skip_score = True
-            s.last_event_message = f'Grid Failure hits {target.name}!'
+            target.block_build = True
+            s.last_event_message = f'Grid Failure hits {target.name} — cannot Build next turn!'
         elif etype == 'event_patent_block':
             available = [a for a in ('material_science', 'chemistry', 'physics', 'engineering')
                          if a not in target.blocked_areas]
@@ -166,16 +143,27 @@ class TurnEngine:
     # ── Build ─────────────────────────────────────────────────────────────────
 
     def perform_build(self) -> bool:
-        """Build a unit from the current prototype output. Freezes that kWh as VP."""
+        """Build a unit from the current prototype output. Freezes that kWh as score."""
         s = self.state
         if s.phase != Phase.ACTION or s.actions_remaining <= 0:
             return False
-        kwh = s.current_player.build_unit()
+        p = s.current_player
+        if p.block_build:
+            s.last_event_message = f'{p.name}: Grid Failure active — cannot Build this turn!'
+            return False
+        kwh = p.build_unit()
         s.last_event_message = (
-            f'{s.current_player.name} built a unit: {kwh:.2f} kWh  '
-            f'(prototype output locked in)'
+            f'{p.name} built a unit: {kwh:.2f} kWh  '
+            f'(total output now {p.total_output():.2f} kW)'
         )
         s.actions_remaining -= 1
+
+        winner = s.check_win()
+        if winner:
+            s.winner = winner
+            s.phase = Phase.GAME_OVER
+            return True
+
         self._check_actions_done()
         return True
 
@@ -232,19 +220,18 @@ class TurnEngine:
         self._check_actions_done()
         return True
 
-    # ── Discard ───────────────────────────────────────────────────────────────
+    # ── Unslot ────────────────────────────────────────────────────────────────
 
-    def perform_discard(self, card_idx: int) -> bool:
+    def perform_unslot(self, slot_key: str) -> bool:
+        """Return a prototype card to hand. Free — costs no actions."""
         s = self.state
-        if s.phase != Phase.DISCARD:
-            return False
         p = s.current_player
-        if card_idx < 0 or card_idx >= len(p.hand):
+        attr = f'{slot_key}_card'
+        card = getattr(p.prototype, attr, None)
+        if card is None:
             return False
-        card = p.hand.pop(card_idx)
-        s.decks[card.area].discard(card)
-        if len(p.hand) <= p.HAND_LIMIT:
-            self._begin_handoff()
+        setattr(p.prototype, attr, None)
+        p.hand.append(card)
         return True
 
     # ── Internal helpers ──────────────────────────────────────────────────────
@@ -254,23 +241,23 @@ class TurnEngine:
         p = s.current_player
         etype = card.effect['type']
 
-        p.hand.remove(card)  # remove from hand first
+        p.hand.remove(card)
 
         if etype in ('set_junction', 'set_optical', 'set_contact'):
             old = p.prototype.slot_card(card)
             if old:
-                s.decks[old.area].discard(old)
-            # card now lives in the prototype slot; do NOT discard it
+                p.hand.append(old)  # displaced card returns to hand, not discard
+            # slot cards are free — no action cost, no actions_done check
+            return
         elif etype == 'farm_multiplier':
             p.farm_bonus += card.effect['delta']
             s.decks[card.area].discard(card)
         elif etype == 'event_policy_subsidy':
             for area in ('material_science', 'chemistry', 'physics', 'engineering'):
-                if len(p.hand) < p.HAND_LIMIT + 2:
-                    extra = s.decks[area].draw()
-                    if extra:
-                        p.hand.append(extra)
-            s.last_event_message = f'{p.name} draws 2 extra cards!'
+                extra = s.decks[area].draw()
+                if extra:
+                    p.hand.append(extra)
+            s.last_event_message = f'{p.name} draws extra cards!'
             s.decks[card.area].discard(card)
 
         s.actions_remaining -= 1
@@ -279,4 +266,4 @@ class TurnEngine:
     def _check_actions_done(self) -> None:
         s = self.state
         if s.phase == Phase.ACTION and s.actions_remaining <= 0:
-            self.begin_discard_phase()
+            self._begin_handoff()

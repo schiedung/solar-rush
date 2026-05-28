@@ -10,6 +10,22 @@ import ui.layout as L
 
 TITLE = 'Solar Farm — Research & Build'
 FPS = 60
+LOGICAL_W, LOGICAL_H = L.SW, L.SH
+
+_fullscreen = False
+
+
+def _toggle_fullscreen(screen: pygame.Surface) -> pygame.Surface:
+    global _fullscreen
+    _fullscreen = not _fullscreen
+    if _fullscreen:
+        return pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    return pygame.display.set_mode((LOGICAL_W, LOGICAL_H), pygame.RESIZABLE)
+
+
+def _scale_mouse(pos: tuple[int, int], screen: pygame.Surface) -> tuple[int, int]:
+    sw, sh = screen.get_size()
+    return (int(pos[0] * LOGICAL_W / sw), int(pos[1] * LOGICAL_H / sh))
 
 
 def reset_game(num_players: int):
@@ -28,6 +44,11 @@ def handle_click(
     phase = state.phase
 
     if phase == Phase.ACTION:
+        # Unslot buttons on prototype slots (free, no action cost)
+        for slot_key, ubtn in rects.slot_rects.items():
+            if ubtn.collidepoint(pos):
+                engine.perform_unslot(slot_key)
+                return
         # Deck draw buttons
         for area, rect in L.DECK_RECTS.items():
             if rect.collidepoint(pos):
@@ -43,7 +64,7 @@ def handle_click(
         if L.PASS_BTN.collidepoint(pos):
             engine.perform_pass()
             return
-        # Hand cards (slot or event select)
+        # Hand cards
         hand = state.current_player.hand
         for i, rect in enumerate(rects.hand_rects):
             if rect.collidepoint(pos) and i < len(hand):
@@ -68,13 +89,6 @@ def handle_click(
                 engine.complete_research(i)
                 return
 
-    elif phase == Phase.DISCARD:
-        hand = state.current_player.hand
-        for i, rect in enumerate(rects.hand_rects):
-            if rect.collidepoint(pos) and i < len(hand):
-                engine.perform_discard(i)
-                return
-
     elif phase == Phase.HANDOFF:
         if rects.handoff_btn.collidepoint(pos):
             engine.advance_to_next_player()
@@ -84,64 +98,78 @@ def handle_click(
             return 'reset'
 
 
-def _player_count_screen(screen: pygame.Surface, clock: pygame.time.Clock) -> int:
+def _player_count_screen(
+    logical: pygame.Surface,
+    screen: pygame.Surface,
+    clock: pygame.time.Clock,
+) -> int:
     import ui.colors as C
     btns = {
-        2: pygame.Rect(L.SW // 2 - 180, L.SH // 2 - 30, 100, 60),
-        3: pygame.Rect(L.SW // 2 - 50,  L.SH // 2 - 30, 100, 60),
-        4: pygame.Rect(L.SW // 2 + 80,  L.SH // 2 - 30, 100, 60),
+        2: pygame.Rect(LOGICAL_W // 2 - 180, LOGICAL_H // 2 - 30, 100, 60),
+        3: pygame.Rect(LOGICAL_W // 2 - 50,  LOGICAL_H // 2 - 30, 100, 60),
+        4: pygame.Rect(LOGICAL_W // 2 + 80,  LOGICAL_H // 2 - 30, 100, 60),
     }
     while True:
-        mouse = pygame.mouse.get_pos()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit(0)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    screen = _toggle_fullscreen(screen)
+                elif event.key == pygame.K_F4 and (event.mod & pygame.KMOD_ALT):
+                    pygame.quit()
+                    sys.exit(0)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                lpos = _scale_mouse(event.pos, screen)
                 for n, rect in btns.items():
-                    if rect.collidepoint(event.pos):
+                    if rect.collidepoint(lpos):
                         return n
 
-        screen.fill(C.BG)
+        mouse = _scale_mouse(pygame.mouse.get_pos(), screen)
+
+        logical.fill(C.BG)
         title = F.get('title').render('Solar Farm', True, C.TEXT_GOLD)
-        screen.blit(title, (L.SW // 2 - title.get_width() // 2, L.SH // 2 - 130))
+        logical.blit(title, (LOGICAL_W // 2 - title.get_width() // 2, LOGICAL_H // 2 - 130))
 
         sub = F.get('large').render('How many players?', True, C.TEXT_MAIN)
-        screen.blit(sub, (L.SW // 2 - sub.get_width() // 2, L.SH // 2 - 75))
+        logical.blit(sub, (LOGICAL_W // 2 - sub.get_width() // 2, LOGICAL_H // 2 - 75))
 
         hint = F.get('small').render(
-            'Research cards  ·  Upgrade your prototype  ·  Build units  ·  Bank kWh',
+            'Research cards  ·  Upgrade your prototype  ·  Build units  ·  Reach 20 kW first',
             True, C.TEXT_DIM,
         )
-        screen.blit(hint, (L.SW // 2 - hint.get_width() // 2, L.SH // 2 + 60))
+        logical.blit(hint, (LOGICAL_W // 2 - hint.get_width() // 2, LOGICAL_H // 2 + 60))
 
         for n, rect in btns.items():
             hov = rect.collidepoint(mouse)
-            pygame.draw.rect(screen, (55, 80, 130) if hov else (35, 55, 95), rect, border_radius=10)
-            pygame.draw.rect(screen, C.TEXT_GOLD, rect, 2, border_radius=10)
+            pygame.draw.rect(logical, C.BTN_HOVER if hov else C.BTN_NORMAL, rect, border_radius=10)
+            pygame.draw.rect(logical, C.TEXT_GOLD, rect, 2, border_radius=10)
             lbl = F.get('title').render(str(n), True, C.TEXT_GOLD)
-            screen.blit(lbl, (rect.centerx - lbl.get_width() // 2,
-                               rect.centery - lbl.get_height() // 2))
+            logical.blit(lbl, (rect.centerx - lbl.get_width() // 2,
+                                rect.centery - lbl.get_height() // 2))
 
+        pygame.transform.scale(logical, screen.get_size(), screen)
         pygame.display.flip()
         clock.tick(FPS)
 
 
 def main() -> None:
     pygame.init()
-    screen = pygame.display.set_mode((L.SW, L.SH))
+    screen = pygame.display.set_mode((LOGICAL_W, LOGICAL_H), pygame.RESIZABLE)
     pygame.display.set_caption(TITLE)
     clock = pygame.time.Clock()
     F.load()
     A.load()
 
-    num_players = _player_count_screen(screen, clock)
+    logical = pygame.Surface((LOGICAL_W, LOGICAL_H))
+
+    num_players = _player_count_screen(logical, screen, clock)
     state, engine = reset_game(num_players)
     rects = R.UIRects()
-    mouse_pos = (0, 0)
 
     while True:
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = _scale_mouse(pygame.mouse.get_pos(), screen)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -150,19 +178,23 @@ def main() -> None:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     engine.deselect_card()
+                elif event.key == pygame.K_F11:
+                    screen = _toggle_fullscreen(screen)
                 elif event.key == pygame.K_F4 and (event.mod & pygame.KMOD_ALT):
                     pygame.quit()
                     sys.exit(0)
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                lpos = _scale_mouse(event.pos, screen)
                 if event.button == 1:
-                    result = handle_click(event.pos, state, engine, rects)
+                    result = handle_click(lpos, state, engine, rects)
                     if result == 'reset':
-                        num_players = _player_count_screen(screen, clock)
+                        num_players = _player_count_screen(logical, screen, clock)
                         state, engine = reset_game(num_players)
                 elif event.button == 3:
                     engine.deselect_card()
 
-        rects = R.draw(screen, state, mouse_pos)
+        rects = R.draw(logical, state, mouse_pos)
+        pygame.transform.scale(logical, screen.get_size(), screen)
         pygame.display.flip()
         clock.tick(FPS)
 
