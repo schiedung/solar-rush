@@ -157,7 +157,7 @@ def _mode_screen(
         logical.blit(logo, (LOGICAL_W // 2 - logo.get_width() // 2, LOGICAL_H // 2 - 245))
 
         title = F.get('large').render('Choose a game mode', True, C.TEXT_MAIN)
-        logical.blit(title, (LOGICAL_W // 2 - title.get_width() // 2, LOGICAL_H // 2 - 82))
+        logical.blit(title, (LOGICAL_W // 2 - title.get_width() // 2, LOGICAL_H // 2 + 64))
 
         for mode, rect in btns.items():
             _draw_menu_button(logical, rect, labels[mode], mouse, C.TEXT_GOLD)
@@ -235,9 +235,9 @@ def _player_count_screen(
 ) -> int:
     import ui.colors as C
     btns = {
-        2: pygame.Rect(LOGICAL_W // 2 - 180, LOGICAL_H // 2 - 30, 100, 60),
-        3: pygame.Rect(LOGICAL_W // 2 - 50,  LOGICAL_H // 2 - 30, 100, 60),
-        4: pygame.Rect(LOGICAL_W // 2 + 80,  LOGICAL_H // 2 - 30, 100, 60),
+        2: pygame.Rect(LOGICAL_W // 2 - 180, LOGICAL_H // 2, 100, 60),
+        3: pygame.Rect(LOGICAL_W // 2 - 50,  LOGICAL_H // 2, 100, 60),
+        4: pygame.Rect(LOGICAL_W // 2 + 80,  LOGICAL_H // 2, 100, 60),
     }
     while True:
         for event in pygame.event.get():
@@ -267,13 +267,13 @@ def _player_count_screen(
         logical.blit(logo, (LOGICAL_W // 2 - logo.get_width() // 2, LOGICAL_H // 2 - 245))
 
         sub = F.get('large').render('How many players?', True, C.TEXT_MAIN)
-        logical.blit(sub, (LOGICAL_W // 2 - sub.get_width() // 2, LOGICAL_H // 2 - 75))
+        logical.blit(sub, (LOGICAL_W // 2 - sub.get_width() // 2, LOGICAL_H // 2 - 35))
 
         hint = F.get('small').render(
             'Research cards  ·  Upgrade your prototype  ·  Build units  ·  Reach ' + str(RACE_TARGET_KW)+ ' kW first',
             True, C.TEXT_DIM,
         )
-        logical.blit(hint, (LOGICAL_W // 2 - hint.get_width() // 2, LOGICAL_H // 2 + 60))
+        logical.blit(hint, (LOGICAL_W // 2 - hint.get_width() // 2, LOGICAL_H // 2 + 90))
 
         for n, rect in btns.items():
             hov = rect.collidepoint(mouse)
