@@ -134,14 +134,18 @@ def _draw_slot(
 def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, pygame.Rect]:
     """Draw the current player's prototype panel and built-units grid.
     Returns dict of slot_key → unslot button rect for filled slots."""
-    pygame.draw.rect(surf, C.FARM_BG, (0, L.TOPBAR_H, L.FARM_W, L.MAIN_H))
+    farm_overlay = pygame.Surface((L.FARM_W, L.MAIN_H), pygame.SRCALPHA)
+    farm_overlay.fill((*C.FARM_BG, 175))
+    surf.blit(farm_overlay, (0, L.TOPBAR_H))
     pygame.draw.line(surf, C.DIVIDER, (L.FARM_W, L.TOPBAR_H), (L.FARM_W, L.TOPBAR_H + L.MAIN_H), 2)
 
     p = state.current_player
     proto = p.prototype
 
     proto_bg = pygame.Rect(4, PROTO_Y, L.FARM_W - 8, PROTO_H)
-    pygame.draw.rect(surf, C.BASE02, proto_bg, border_radius=10)
+    proto_panel = pygame.Surface((proto_bg.width, proto_bg.height), pygame.SRCALPHA)
+    pygame.draw.rect(proto_panel, (*C.BASE02, 220), proto_panel.get_rect(), border_radius=10)
+    surf.blit(proto_panel, proto_bg)
     pygame.draw.rect(surf, C.BLUE, proto_bg, 1, border_radius=10)
 
     kwh_out = proto.kwh_output()

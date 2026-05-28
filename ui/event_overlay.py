@@ -5,6 +5,7 @@ from game.state import GameState, Phase
 import ui.colors as C
 import ui.fonts as F
 import ui.layout as L
+import ui.assets as A
 
 
 def _dim_screen(surf: pygame.Surface) -> None:
@@ -111,7 +112,12 @@ def draw_research_choose(
         tier_surf = F.get('tiny').render('★' * card.tier, True, C.TEXT_GOLD)
         surf.blit(tier_surf, (rect.centerx - tier_surf.get_width() // 2, rect.y + 54))
 
-        y_off = rect.y + 76
+        art_rect = pygame.Rect(rect.x + 10, rect.y + 76, rect.width - 20, 76)
+        art = A.get_card_image(card.id, art_rect.width, art_rect.height)
+        surf.blit(art, art_rect)
+        pygame.draw.rect(surf, area_color, art_rect, 1, border_radius=5)
+
+        y_off = rect.y + 160
         for line in _wrap(card.description, F.get('tiny'), rect.width - 10):
             s = F.get('tiny').render(line, True, C.TEXT_DIM)
             surf.blit(s, (rect.x + 5, y_off))

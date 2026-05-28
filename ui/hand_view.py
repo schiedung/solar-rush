@@ -5,6 +5,7 @@ from game.state import GameState
 import ui.colors as C
 import ui.fonts as F
 import ui.layout as L
+import ui.assets as A
 
 
 def _draw_card(
@@ -36,8 +37,13 @@ def _draw_card(
     name_y = rect.y + 28
     _blit_wrapped(surf, card.name, F.get('bold'), C.TEXT_MAIN, rect.x + 5, name_y, rect.width - 10, 2)
 
-    desc_y = rect.y + 66
-    _blit_wrapped(surf, card.description, F.get('tiny'), C.TEXT_DIM, rect.x + 5, desc_y, rect.width - 10, 4)
+    art_rect = pygame.Rect(rect.x + 6, rect.y + 58, rect.width - 12, 48)
+    art = A.get_card_image(card.id, art_rect.width, art_rect.height)
+    surf.blit(art, art_rect)
+    pygame.draw.rect(surf, area_color, art_rect, 1, border_radius=4)
+
+    desc_y = rect.y + 111
+    _blit_wrapped(surf, card.description, F.get('tiny'), C.TEXT_DIM, rect.x + 5, desc_y, rect.width - 10, 2)
 
     etype = card.effect.get('type', '')
     if etype.startswith('event_'):
@@ -84,8 +90,9 @@ def draw(
     mouse_pos: tuple[int, int],
 ) -> list[pygame.Rect]:
     """Draw the current player's hand. Returns card rects in hand order."""
-    pygame.draw.rect(surf, C.HAND_BG,
-                     (0, L.TOPBAR_H + L.MAIN_H, L.SW, L.HAND_H))
+    hand_overlay = pygame.Surface((L.SW, L.HAND_H), pygame.SRCALPHA)
+    hand_overlay.fill((*C.HAND_BG, 210))
+    surf.blit(hand_overlay, (0, L.TOPBAR_H + L.MAIN_H))
     pygame.draw.line(surf, C.DIVIDER,
                      (0, L.TOPBAR_H + L.MAIN_H),
                      (L.SW, L.TOPBAR_H + L.MAIN_H), 2)

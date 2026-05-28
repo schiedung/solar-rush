@@ -4,6 +4,7 @@ from game.state import GameState, Phase
 import ui.colors as C
 import ui.fonts as F
 import ui.layout as L
+import ui.assets as A
 
 _AREAS = ('material_science', 'chemistry', 'physics', 'engineering')
 
@@ -28,6 +29,14 @@ def _draw_button(
     pygame.draw.rect(surf, C.AREA.get(area, C.BTN_BORDER),
                      (rect.x, rect.y, 6, rect.height), border_radius=4)
 
+    card_back = A.get('card_back', 40, 55)
+    stack_x = rect.right - 58
+    stack_y = rect.y + 20
+    for offset in (8, 4, 0):
+        back_rect = pygame.Rect(stack_x - offset, stack_y - offset, 40, 55)
+        surf.blit(card_back, back_rect)
+        pygame.draw.rect(surf, border, back_rect, 1, border_radius=4)
+
     name_txt = C.AREA_LABEL.get(area, area)
     name_surf = F.get('bold').render(name_txt, True, C.TEXT_MAIN if available else C.TEXT_DIM)
     surf.blit(name_surf, (rect.x + 14, rect.y + 8))
@@ -43,7 +52,7 @@ def _draw_button(
         surf.blit(tag, (rect.x + 14, rect.y + 46))
 
     hint = F.get('tiny').render('DRAW', True, C.TEXT_DIM)
-    surf.blit(hint, (rect.right - hint.get_width() - 10, rect.y + 8))
+    surf.blit(hint, (stack_x + 20 - hint.get_width() // 2, rect.y + 6))
 
 
 def draw(
@@ -51,8 +60,9 @@ def draw(
     state: GameState,
     mouse_pos: tuple[int, int],
 ) -> None:
-    pygame.draw.rect(surf, C.PANEL_BG,
-                     (L.FARM_W, L.TOPBAR_H, L.PANEL_W, L.MAIN_H))
+    panel = pygame.Surface((L.PANEL_W, L.MAIN_H), pygame.SRCALPHA)
+    panel.fill((*C.PANEL_BG, 205))
+    surf.blit(panel, (L.FARM_W, L.TOPBAR_H))
 
     p = state.current_player
     phase = state.phase

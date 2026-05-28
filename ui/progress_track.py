@@ -5,6 +5,7 @@ from game.state import GameState, RACE_TARGET_KW
 import ui.colors as C
 import ui.fonts as F
 import ui.layout as L
+import ui.assets as A
 
 
 _MILESTONES = [0, 5, 10, 15, int(RACE_TARGET_KW)]
@@ -21,11 +22,18 @@ def _star(cx: int, cy: int, outer: int, inner: int) -> list:
 
 def draw(surf: pygame.Surface, state: GameState) -> list[pygame.Rect]:
     """Draw the progress track. Returns player token rects for click detection."""
-    pygame.draw.rect(surf, C.TOPBAR_BG, (0, 0, L.SW, L.TOPBAR_H))
-    pygame.draw.rect(surf, C.TRACK_BG, (18, 5, L.SW - 36, 68), border_radius=8)
+    top_overlay = pygame.Surface((L.SW, L.TOPBAR_H), pygame.SRCALPHA)
+    top_overlay.fill((*C.TOPBAR_BG, 150))
+    surf.blit(top_overlay, (0, 0))
+
+    track_bg = pygame.Surface((L.SW - 36, 68), pygame.SRCALPHA)
+    pygame.draw.rect(track_bg, (*C.TRACK_BG, 185), track_bg.get_rect(), border_radius=8)
+    pygame.draw.rect(track_bg, (*C.TEXT_GOLD, 95), track_bg.get_rect(), 1, border_radius=8)
+    surf.blit(track_bg, (18, 5))
 
     # Rail line
-    pygame.draw.line(surf, (42, 120, 140), (L.TRACK_X0, L.TRACK_Y), (L.TRACK_X1, L.TRACK_Y), 3)
+    rail = A.get('track_rail', L.TRACK_USABLE, 34)
+    surf.blit(rail, (L.TRACK_X0, L.TRACK_Y - 17))
 
     # Milestone markers
     for kw in _MILESTONES:
@@ -39,7 +47,8 @@ def draw(surf: pygame.Surface, state: GameState) -> list[pygame.Rect]:
 
     # Goal star
     x_goal = L.kwh_to_x(RACE_TARGET_KW, RACE_TARGET_KW)
-    pygame.draw.polygon(surf, C.TEXT_GOLD, _star(x_goal, L.TRACK_Y - 22, 10, 4))
+    goal_star = A.get('goal_star', 42, 42)
+    surf.blit(goal_star, (x_goal - 21, L.TRACK_Y - 43))
 
     # Player tokens — draw in reverse so P1 is on top when overlapping
     token_rects: list[pygame.Rect] = []
@@ -49,8 +58,10 @@ def draw(surf: pygame.Surface, state: GameState) -> list[pygame.Rect]:
         y = L.TRACK_Y
         pygame.draw.circle(surf, C.BLACK, (x + 2, y + 2), L.TOKEN_R)
         pygame.draw.circle(surf, player.color, (x, y), L.TOKEN_R)
-        border = C.WHITE if i == state.current_player_idx else (100, 100, 130)
-        pygame.draw.circle(surf, border, (x, y), L.TOKEN_R, 2)
+        ring = A.get('token_ring', 38, 38)
+        surf.blit(ring, (x - 19, y - 19))
+        if i == state.current_player_idx:
+            pygame.draw.circle(surf, C.WHITE, (x, y), L.TOKEN_R + 2, 2)
         num = F.get('bold').render(str(i + 1), True, C.WHITE)
         surf.blit(num, (x - num.get_width() // 2, y - num.get_height() // 2))
         tr = pygame.Rect(x - L.TOKEN_R, y - L.TOKEN_R, L.TOKEN_R * 2, L.TOKEN_R * 2)

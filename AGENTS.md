@@ -1,4 +1,4 @@
-# Solar Farm — AGENTS.md
+# Solar Rush — AGENTS.md
 
 Reference document for LLM agents working on this codebase. Read this before editing any file.
 
@@ -6,7 +6,7 @@ Reference document for LLM agents working on this codebase. Read this before edi
 
 ## What the game is
 
-**Solar Farm** is a competitive hot-seat board game for 2–4 players, implemented in Python 3.12 + Pygame 2.x. Players race to be first to reach **20 kW of output**, or to have the highest output after 20 rounds.
+**Solar Rush** is a competitive hot-seat board game for 2–4 players, implemented in Python 3.12 + Pygame 2.x. Players race to be first to reach **20 kW of output**, or to have the highest output after 20 rounds.
 
 Each player owns a **prototype solar cell** with three upgrade slots and a **farm** of frozen built units. On each turn a player takes 2 actions, then passes to the next player.
 

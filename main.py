@@ -8,7 +8,7 @@ import ui.assets as A
 import ui.renderer as R
 import ui.layout as L
 
-TITLE = 'Solar Farm — Research & Build'
+TITLE = 'Solar Rush — Research & Build'
 FPS = 60
 LOGICAL_W, LOGICAL_H = L.SW, L.SH
 
@@ -128,9 +128,13 @@ def _player_count_screen(
 
         mouse = _scale_mouse(pygame.mouse.get_pos(), screen)
 
-        logical.fill(C.BG)
-        title = F.get('title').render('Solar Farm', True, C.TEXT_GOLD)
-        logical.blit(title, (LOGICAL_W // 2 - title.get_width() // 2, LOGICAL_H // 2 - 130))
+        logical.blit(A.get('background', LOGICAL_W, LOGICAL_H), (0, 0))
+        shade = pygame.Surface((LOGICAL_W, LOGICAL_H), pygame.SRCALPHA)
+        shade.fill((*C.BG, 155))
+        logical.blit(shade, (0, 0))
+
+        logo = A.get('logo', 420, 218)
+        logical.blit(logo, (LOGICAL_W // 2 - logo.get_width() // 2, LOGICAL_H // 2 - 245))
 
         sub = F.get('large').render('How many players?', True, C.TEXT_MAIN)
         logical.blit(sub, (LOGICAL_W // 2 - sub.get_width() // 2, LOGICAL_H // 2 - 75))

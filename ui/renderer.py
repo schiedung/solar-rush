@@ -5,6 +5,7 @@ from game.state import GameState, Phase
 import ui.colors as C
 import ui.fonts as F
 import ui.layout as L
+import ui.assets as A
 import ui.progress_track as track_view
 import ui.farm_view as farm_view
 import ui.hand_view as hand_view
@@ -24,7 +25,7 @@ class UIRects:
 
 
 def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
-    surf.fill(C.BG)
+    surf.blit(A.get('background', L.SW, L.SH), (0, 0))
     rects = UIRects()
 
     rects.token_rects = track_view.draw(surf, state)
