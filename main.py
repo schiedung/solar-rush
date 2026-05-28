@@ -115,9 +115,9 @@ def _player_count_screen(
                 pygame.quit()
                 sys.exit(0)
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_F11:
+                if event.key == pygame.K_f and (event.mod & pygame.KMOD_CTRL):
                     screen = _toggle_fullscreen(screen)
-                elif event.key == pygame.K_F4 and (event.mod & pygame.KMOD_ALT):
+                elif event.key == pygame.K_q and (event.mod & pygame.KMOD_CTRL):
                     pygame.quit()
                     sys.exit(0)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -182,9 +182,9 @@ def main() -> None:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     engine.deselect_card()
-                elif event.key == pygame.K_F11:
+                elif event.key == pygame.K_f and (event.mod & pygame.KMOD_CTRL):
                     screen = _toggle_fullscreen(screen)
-                elif event.key == pygame.K_F4 and (event.mod & pygame.KMOD_ALT):
+                elif event.key == pygame.K_q and (event.mod & pygame.KMOD_CTRL):
                     pygame.quit()
                     sys.exit(0)
             elif event.type == pygame.MOUSEBUTTONDOWN:

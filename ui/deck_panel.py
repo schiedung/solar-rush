@@ -107,6 +107,8 @@ def draw(
         )
         _blit_clipped(surf, line, pygame.Rect(L.ACTION_X, y + i * 19, 310, line.get_height()))
 
+    _draw_keybindings(surf)
+
 
 def _draw_action_btn(
     surf: pygame.Surface,
@@ -130,6 +132,15 @@ def _draw_action_btn(
 
 def _blit_clipped(surf: pygame.Surface, text_surf: pygame.Surface, rect: pygame.Rect) -> None:
     surf.blit(text_surf, rect.topleft, area=pygame.Rect(0, 0, rect.width, rect.height))
+
+
+def _draw_keybindings(surf: pygame.Surface) -> None:
+    x = L.HAND_PANEL_X + L.HAND_PANEL_W + 10  # always right of hand cards
+    y = L.SH - 58
+    for text in ('ESC / RMB — deselect', 'Ctrl+F  fullscreen   Ctrl+Q  quit'):
+        s = F.get('tiny').render(text, True, C.TEXT_DIM)
+        surf.blit(s, (x, y))
+        y += s.get_height() + 3
 
 
 def _status_text(state: GameState) -> str:

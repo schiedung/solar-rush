@@ -100,8 +100,8 @@ uv run main.py
 | Left click | Select / confirm |
 | Right click | Deselect / cancel |
 | Escape | Cancel current selection |
-| F11 | Toggle fullscreen |
-| Alt+F4 | Quit |
+| Ctrl+F | Toggle fullscreen |
+| Ctrl+Q | Quit |
 
 ---
 
