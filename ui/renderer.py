@@ -34,7 +34,7 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
 
     phase = state.phase
     if phase == Phase.HANDOFF:
-        rects.handoff_btn = overlay.draw_handoff(surf, state, mouse_pos)
+        rects.handoff_btn = L.FINISH_TURN_BTN
     elif phase == Phase.GAME_OVER:
         rects.play_again_btn = overlay.draw_game_over(surf, state, mouse_pos)
     elif phase == Phase.RESEARCH_CHOOSE:
