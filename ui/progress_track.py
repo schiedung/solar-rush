@@ -1,6 +1,6 @@
 import pygame
 
-from game.state import GameState, RACE_TARGET_KW
+from game.state import GameState, RACE_TARGET_KW, MAX_ROUNDS
 import ui.colors as C
 import ui.fonts as F
 import ui.layout as L
@@ -39,7 +39,7 @@ def draw(surf: pygame.Surface, state: GameState) -> list[pygame.Rect]:
     # Info strip
     p = state.current_player
     info = (
-        f'Round {state.round_number}/{RACE_TARGET_KW}   |   '
+        f'Round {state.round_number}/{MAX_ROUNDS}   |   '
         f'{p.name}\'s Turn   |   '
         f'Actions: {state.actions_remaining}'
     )
