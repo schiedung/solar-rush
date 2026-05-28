@@ -1,6 +1,24 @@
-# Solar Rush — AGENTS.md
+# CLAUDE.md
 
-Reference document for LLM agents working on this codebase. Read this before editing any file.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+> Also used as `AGENTS.md` — the reference document for all LLM agents working on this codebase. Read this before editing any file.
+
+---
+
+## Commands
+
+```bash
+pip install pygame
+python main.py
+```
+
+Or with `uv` (no install step):
+```bash
+uv run main.py
+```
+
+No build step, no test suite, no linter configuration.
 
 ---
 
