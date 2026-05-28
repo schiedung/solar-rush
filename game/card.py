@@ -34,6 +34,7 @@ class Card:
     tier: int
     name: str
     description: str
+    long_description: str
     effect: dict[str, Any]
 
     def is_slot_card(self) -> bool:
