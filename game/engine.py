@@ -2,7 +2,6 @@ import random
 from typing import Optional
 
 from game.card import Card
-from game.cell import SolarCell
 from game.player import Player
 from game.state import GameState, Phase, MAX_ROUNDS
 
@@ -14,26 +13,26 @@ class TurnEngine:
     # ── Phase transitions ────────────────────────────────────────────────────
 
     def begin_turn(self) -> None:
-        """Called at the start of each player's turn (score phase)."""
         s = self.state
         p = s.current_player
         s.phase = Phase.SCORE
         s.last_event_message = ''
 
-        # Tick timed effects
         if p.halved_turns > 0:
             p.halved_turns -= 1
 
-        # Clear expired blocks
         p.blocked_areas.clear()
 
         if p.skip_score:
             p.skip_score = False
-            s.last_event_message = f'{p.name} grid failure — score skipped!'
+            s.last_event_message = f'{p.name}: grid failure — score skipped!'
         else:
             earned = p.total_output()
             p.banked_kwh += earned
-            s.last_event_message = f'{p.name} earned {earned:.1f} kWh'
+            if earned > 0:
+                s.last_event_message = f'{p.name} earned {earned:.2f} kWh  ({len(p.units)} units)'
+            else:
+                s.last_event_message = f'{p.name} has no built units yet — build one!'
 
         winner = s.check_win()
         if winner:
@@ -54,7 +53,6 @@ class TurnEngine:
     def _begin_handoff(self) -> None:
         s = self.state
         if s.round_number >= MAX_ROUNDS and s.current_player_idx == len(s.players) - 1:
-            # Last player of last round — game ends by round limit
             winner = max(s.players, key=lambda p: p.banked_kwh)
             s.winner = winner
             s.phase = Phase.GAME_OVER
@@ -71,7 +69,7 @@ class TurnEngine:
         s.current_player_idx = next_idx
         self.begin_turn()
 
-    # ── Actions ──────────────────────────────────────────────────────────────
+    # ── Draw ─────────────────────────────────────────────────────────────────
 
     def can_draw(self, area: str) -> bool:
         s = self.state
@@ -93,63 +91,28 @@ class TurnEngine:
             self._check_actions_done()
         return card
 
+    # ── Play a card ───────────────────────────────────────────────────────────
+
     def select_card(self, card: Card) -> None:
-        """Player clicks a card in hand — enters targeting phase if needed."""
+        """Player clicks a card in hand. Immediate cards apply instantly; events need targeting."""
         s = self.state
         if s.phase != Phase.ACTION or s.actions_remaining <= 0:
             return
         if card not in s.current_player.hand:
             return
-        s.selected_card = card
-        if card.needs_cell_target():
-            s.phase = Phase.TARGETING_CELL
-        elif card.needs_player_target():
-            s.phase = Phase.TARGETING_PLAYER
-        else:
-            # Immediate card — resolve now
+
+        if card.is_immediate():
             self._apply_immediate(card)
-            s.selected_card = None
+        elif card.needs_player_target():
+            s.selected_card = card
+            s.phase = Phase.TARGETING_PLAYER
+        # (no TARGETING_CELL phase needed — all slot cards are immediate)
 
     def deselect_card(self) -> None:
         s = self.state
-        if s.phase in (Phase.TARGETING_CELL, Phase.TARGETING_PLAYER, Phase.RESEARCH_PICK_AREA):
+        if s.phase in (Phase.TARGETING_PLAYER, Phase.RESEARCH_PICK_AREA):
             s.selected_card = None
             s.phase = Phase.ACTION
-
-    def enter_research_mode(self) -> bool:
-        s = self.state
-        if s.phase != Phase.ACTION or s.actions_remaining < 2:
-            return False
-        s.phase = Phase.RESEARCH_PICK_AREA
-        return True
-
-    def perform_play_upgrade(self, cell_idx: int) -> bool:
-        s = self.state
-        if s.phase != Phase.TARGETING_CELL or not s.selected_card:
-            return False
-        p = s.current_player
-        if cell_idx < 0 or cell_idx >= len(p.farm):
-            return False
-
-        card = s.selected_card
-        cell = p.farm[cell_idx]
-        etype = card.effect['type']
-        delta = card.effect['delta']
-
-        if etype == 'upgrade_junction':
-            cell.upgrade_junction(delta)
-        elif etype == 'upgrade_optical':
-            cell.upgrade_optical(delta)
-        elif etype == 'upgrade_contact':
-            cell.upgrade_contact(delta)
-
-        p.hand.remove(card)
-        s.decks[card.area].discard(card)
-        s.selected_card = None
-        s.actions_remaining -= 1
-        s.phase = Phase.ACTION
-        self._check_actions_done()
-        return True
 
     def perform_play_event(self, target_player_idx: int) -> bool:
         s = self.state
@@ -174,13 +137,16 @@ class TurnEngine:
             if available:
                 blocked = random.choice(available)
                 target.blocked_areas.add(blocked)
-                s.last_event_message = f'Patent Block: {target.name} loses {blocked.replace("_"," ").title()}!'
+                s.last_event_message = (
+                    f'Patent Block: {target.name} loses '
+                    f'{blocked.replace("_", " ").title()}!'
+                )
         elif etype == 'event_hail_damage':
-            if len(target.farm) > 1:
-                target.farm.pop()
-                s.last_event_message = f'Hail Damage! {target.name} loses a cell!'
+            if target.units:
+                target.units.pop()
+                s.last_event_message = f'Hail Damage! {target.name} loses a built unit!'
             else:
-                s.last_event_message = f'Hail Damage fizzles — {target.name} only has 1 cell.'
+                s.last_event_message = f'Hail Damage fizzles — {target.name} has no units.'
         elif etype == 'event_regulatory':
             discarded = target.discard_top_hand_card()
             if discarded:
@@ -197,26 +163,42 @@ class TurnEngine:
         self._check_actions_done()
         return True
 
+    # ── Build ─────────────────────────────────────────────────────────────────
+
     def perform_build(self) -> bool:
+        """Build a unit from the current prototype output. Freezes that kWh as VP."""
         s = self.state
         if s.phase != Phase.ACTION or s.actions_remaining <= 0:
             return False
-        s.current_player.farm.append(SolarCell())
+        kwh = s.current_player.build_unit()
+        s.last_event_message = (
+            f'{s.current_player.name} built a unit: {kwh:.2f} kWh  '
+            f'(prototype output locked in)'
+        )
         s.actions_remaining -= 1
         self._check_actions_done()
         return True
 
+    # ── Pass ──────────────────────────────────────────────────────────────────
+
     def perform_pass(self) -> bool:
-        """Spend 1 action doing nothing."""
         s = self.state
         if s.phase != Phase.ACTION or s.actions_remaining <= 0:
             return False
         s.actions_remaining -= 1
         self._check_actions_done()
+        return True
+
+    # ── Research ──────────────────────────────────────────────────────────────
+
+    def enter_research_mode(self) -> bool:
+        s = self.state
+        if s.phase != Phase.ACTION or s.actions_remaining < 2:
+            return False
+        s.phase = Phase.RESEARCH_PICK_AREA
         return True
 
     def start_research(self, area: str) -> bool:
-        """Spend 2 actions to peek top 3 cards from a deck."""
         s = self.state
         if s.phase != Phase.RESEARCH_PICK_AREA:
             return False
@@ -250,6 +232,8 @@ class TurnEngine:
         self._check_actions_done()
         return True
 
+    # ── Discard ───────────────────────────────────────────────────────────────
+
     def perform_discard(self, card_idx: int) -> bool:
         s = self.state
         if s.phase != Phase.DISCARD:
@@ -263,34 +247,32 @@ class TurnEngine:
             self._begin_handoff()
         return True
 
-    # ── Internal helpers ─────────────────────────────────────────────────────
+    # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _apply_immediate(self, card: Card) -> None:
         s = self.state
         p = s.current_player
         etype = card.effect['type']
 
-        if etype in ('upgrade_junction_all', 'upgrade_optical_all', 'upgrade_contact_all'):
-            delta = card.effect['delta']
-            for cell in p.farm:
-                if etype == 'upgrade_junction_all':
-                    cell.upgrade_junction(delta)
-                elif etype == 'upgrade_optical_all':
-                    cell.upgrade_optical(delta)
-                elif etype == 'upgrade_contact_all':
-                    cell.upgrade_contact(delta)
+        p.hand.remove(card)  # remove from hand first
+
+        if etype in ('set_junction', 'set_optical', 'set_contact'):
+            old = p.prototype.slot_card(card)
+            if old:
+                s.decks[old.area].discard(old)
+            # card now lives in the prototype slot; do NOT discard it
         elif etype == 'farm_multiplier':
             p.farm_bonus += card.effect['delta']
+            s.decks[card.area].discard(card)
         elif etype == 'event_policy_subsidy':
-            for area_order in ('material_science', 'chemistry', 'physics', 'engineering'):
+            for area in ('material_science', 'chemistry', 'physics', 'engineering'):
                 if len(p.hand) < p.HAND_LIMIT + 2:
-                    extra = s.decks[area_order].draw()
+                    extra = s.decks[area].draw()
                     if extra:
                         p.hand.append(extra)
             s.last_event_message = f'{p.name} draws 2 extra cards!'
+            s.decks[card.area].discard(card)
 
-        p.hand.remove(card)
-        s.decks[card.area].discard(card)
         s.actions_remaining -= 1
         self._check_actions_done()
 

@@ -14,7 +14,6 @@ import ui.event_overlay as overlay
 
 @dataclass
 class UIRects:
-    cell_rects: list[pygame.Rect] = field(default_factory=list)
     hand_rects: list[pygame.Rect] = field(default_factory=list)
     token_rects: list[pygame.Rect] = field(default_factory=list)
     research_rects: list[pygame.Rect] = field(default_factory=list)
@@ -24,14 +23,13 @@ class UIRects:
 
 
 def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
-    """Draw the entire game screen. Returns all clickable rects."""
     surf.fill(C.BG)
     rects = UIRects()
 
     rects.token_rects = track_view.draw(surf, state)
-    rects.cell_rects  = farm_view.draw(surf, state, mouse_pos)
+    farm_view.draw(surf, state, mouse_pos)
     deck_panel.draw(surf, state, mouse_pos)
-    rects.hand_rects  = hand_view.draw(surf, state, mouse_pos)
+    rects.hand_rects = hand_view.draw(surf, state, mouse_pos)
 
     phase = state.phase
     if phase == Phase.HANDOFF:
@@ -42,19 +40,5 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
         rects.research_rects = overlay.draw_research_choose(surf, state, mouse_pos)
     elif phase == Phase.TARGETING_PLAYER:
         rects.player_target_rects = overlay.draw_player_target(surf, state, mouse_pos)
-    elif phase == Phase.SCORE:
-        _draw_score_flash(surf, state)
 
     return rects
-
-
-def _draw_score_flash(surf: pygame.Surface, state: GameState) -> None:
-    if not state.last_event_message:
-        return
-    msg = F.get('large').render(state.last_event_message, True, C.TEXT_GOLD)
-    x = L.SW // 2 - msg.get_width() // 2
-    y = L.TOPBAR_H + L.MAIN_H // 2 - msg.get_height() // 2
-    # shadow
-    shd = F.get('large').render(state.last_event_message, True, C.BLACK)
-    surf.blit(shd, (x + 2, y + 2))
-    surf.blit(msg, (x, y))

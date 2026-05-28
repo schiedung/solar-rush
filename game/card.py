@@ -4,10 +4,10 @@ from typing import Any
 
 AREAS = ('material_science', 'chemistry', 'physics', 'engineering')
 
-CELL_TARGET_TYPES = (
-    'upgrade_junction',
-    'upgrade_optical',
-    'upgrade_contact',
+SLOT_TYPES = (
+    'set_junction',
+    'set_optical',
+    'set_contact',
 )
 
 PLAYER_TARGET_TYPES = (
@@ -19,9 +19,9 @@ PLAYER_TARGET_TYPES = (
 )
 
 IMMEDIATE_TYPES = (
-    'upgrade_junction_all',
-    'upgrade_optical_all',
-    'upgrade_contact_all',
+    'set_junction',
+    'set_optical',
+    'set_contact',
     'farm_multiplier',
     'event_policy_subsidy',
 )
@@ -36,8 +36,8 @@ class Card:
     description: str
     effect: dict[str, Any]
 
-    def needs_cell_target(self) -> bool:
-        return self.effect['type'] in CELL_TARGET_TYPES
+    def is_slot_card(self) -> bool:
+        return self.effect['type'] in SLOT_TYPES
 
     def needs_player_target(self) -> bool:
         return self.effect['type'] in PLAYER_TARGET_TYPES
