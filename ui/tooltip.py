@@ -27,12 +27,11 @@ def draw_tooltip(
     area_color = C.AREA.get(card.area, C.CELL_BORDER)
     area_label = C.AREA_LABEL.get(card.area, card.area)
 
-    from ui.hand_view import _card_badge, _slot_multiplier
+    from ui.hand_view import _card_badge
     badge = _card_badge(card)
-    tier_str = '★' * card.tier
 
     title_line = f'{card.name}'
-    header_line = f'{area_label}  ·  Tier {card.tier} {tier_str}  ·  {badge}'
+    header_line = f'{area_label}  ·  {badge}' if badge else area_label
 
     max_w = _MAX_TOOLTIP_W - 2 * _PADDING
     desc_lines = _wrap_text(card.long_description, body_font, max_w)
