@@ -1,0 +1,12 @@
+{
+  "_comment": "Map logical asset names to file paths relative to this directory.",
+  "_comment2": "Set a value to null or omit it to use the procedural placeholder.",
+  "_example": "\"background\": \"board/background.png\"",
+
+  "background": null,
+  "card_back": null,
+  "cell_base": null,
+  "track_rail": null,
+  "button_normal": null,
+  "button_hover": null
+}
