@@ -85,13 +85,11 @@ def draw(
     _draw_action_btn(surf, L.RESEARCH_BTN,
                      'Research',
                      can_act and state.actions_remaining >= 2, mouse_pos)
-    _draw_action_btn(surf, L.PASS_BTN, 'Pass Action',
-                     can_act, mouse_pos)
     finish_ready = player_interactive and phase in (Phase.ACTION, Phase.HANDOFF)
     finish_label = 'Continue' if phase == Phase.HANDOFF else 'Finish Turn'
     _draw_action_btn(surf, L.FINISH_TURN_BTN, finish_label,
                      finish_ready, mouse_pos, C.BTN_CONFIRM,
-                     attention=phase == Phase.HANDOFF)
+                     attention=phase == Phase.HANDOFF and player_interactive)
 
     status = _status_text(state)
     st = F.get('small').render(status, True, C.TEXT_DIM)

@@ -67,10 +67,7 @@ def handle_click(
         if L.RESEARCH_BTN.collidepoint(pos):
             engine.enter_research_mode()
             return
-        if L.PASS_BTN.collidepoint(pos):
-            engine.perform_pass()
-            return
-        # Hand cards
+# Hand cards
         hand = state.current_player.hand
         for i, rect in enumerate(rects.hand_rects):
             if rect.collidepoint(pos) and i < len(hand):
