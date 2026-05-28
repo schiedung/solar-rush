@@ -1,7 +1,7 @@
 import sys
 import pygame
 
-from game.state import make_game, Phase
+from game.state import make_game, Phase, RACE_TARGET_KW
 from game.engine import TurnEngine
 from game.ai import STRATEGIES, take_turn_action
 import ui.fonts as F
@@ -270,7 +270,7 @@ def _player_count_screen(
         logical.blit(sub, (LOGICAL_W // 2 - sub.get_width() // 2, LOGICAL_H // 2 - 75))
 
         hint = F.get('small').render(
-            'Research cards  ·  Upgrade your prototype  ·  Build units  ·  Reach 20 kW first',
+            'Research cards  ·  Upgrade your prototype  ·  Build units  ·  Reach ' + str(RACE_TARGET_KW)+ ' kW first',
             True, C.TEXT_DIM,
         )
         logical.blit(hint, (LOGICAL_W // 2 - hint.get_width() // 2, LOGICAL_H // 2 + 60))
