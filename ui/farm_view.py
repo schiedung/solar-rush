@@ -1,6 +1,6 @@
 import pygame
 
-from game.cell import JUNCTION_TIERS, OPTICAL_TIERS, CONTACT_TIERS, MAX_TIER, Prototype
+from game.cell import JUNCTION_TIERS, OPTICAL_TIERS, CONTACT_TIERS
 from game.state import GameState, Phase
 import ui.colors as C
 import ui.fonts as F
@@ -86,35 +86,19 @@ def _draw_slot(
     a_lbl = F.get('tiny').render(area_label, True, C.WHITE if has_card else C.TEXT_DIM)
     surf.blit(a_lbl, (accent.x + 4, accent.y + 3))
 
-    slot_lbl = F.get('tiny').render(slot_key.capitalize(), True, C.TEXT_DIM)
-    surf.blit(slot_lbl, (accent.right - slot_lbl.get_width() - 4, accent.y + 3))
-
     unslot_btn = None
 
     if has_card:
         tier = card.effect['to_tier']
-        tier_name = tier_data[tier]['name']
         mult = tier_data[tier]['multiplier']
 
-        bar_y = rect.y + 28
-        bar_rect = pygame.Rect(rect.x + 8, bar_y, rect.width - 16, 8)
-        pygame.draw.rect(surf, (10, 30, 40), bar_rect, border_radius=4)
-        fill_w = int(bar_rect.width * (tier / MAX_TIER))
-        if fill_w > 0:
-            fill_rect = pygame.Rect(bar_rect.x, bar_rect.y, fill_w, bar_rect.height)
-            pygame.draw.rect(surf, C.TIER_COLORS[tier], fill_rect, border_radius=4)
+        content_y = rect.y + 30
 
         name_surf = F.get('bold').render(card.name[:20], True, C.TEXT_MAIN)
-        surf.blit(name_surf, (rect.x + 6, bar_y + 14))
+        surf.blit(name_surf, (rect.x + 8, content_y))
 
-        tier_surf = F.get('small').render(f'Tier {tier}  —  {tier_name}', True, area_color)
-        surf.blit(tier_surf, (rect.x + 6, bar_y + 34))
-
-        mult_surf = F.get('large').render(f'×{mult:.2f}', True, C.TEXT_GOLD)
-        surf.blit(mult_surf, (rect.x + 6, bar_y + 56))
-
-        stars = F.get('tiny').render('★' * tier + '☆' * (MAX_TIER - tier), True, C.TEXT_GOLD)
-        surf.blit(stars, (rect.right - stars.get_width() - 6, bar_y + 66))
+        mult_surf = F.get('large').render(f'×{mult:.2f}', True, C.WHITE)
+        surf.blit(mult_surf, (rect.x + 8, content_y + 26))
 
         # Unslot button
         ubtn = _unslot_rect(rect)
@@ -141,10 +125,6 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, 
     proto = p.prototype
 
     proto_bg = pygame.Rect(PROTO_X, PROTO_Y, PROTO_W, PROTO_H)
-    proto_panel = pygame.Surface((PROTO_W, PROTO_H), pygame.SRCALPHA)
-    pygame.draw.rect(proto_panel, (*C.BASE02, 96), proto_panel.get_rect(), border_radius=10)
-    surf.blit(proto_panel, proto_bg)
-    pygame.draw.rect(surf, (*C.BLUE, 150), proto_bg, 1, border_radius=10)
 
     kwh_out = proto.kwh_output()
     title = F.get('bold').render(
