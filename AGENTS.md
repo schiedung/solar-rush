@@ -26,7 +26,7 @@ Every player has one `Prototype` (in `game/cell.py`). It has three card slots:
 | `optical_card` | Chemistry | Anti-reflection / passivation layer |
 | `contact_card` | Physics | Contact grid architecture |
 
-Each slot holds one `Card` or `None`. The prototype's kWh output is the **product** of all three slots' multipliers:
+Each slot holds one `Card` or `None`. The prototype's kW output is the **product** of all three slots' multipliers:
 
 ```
 kwh_output() = junction_multiplier × optical_multiplier × contact_multiplier

@@ -9,7 +9,7 @@ class Player:
     name: str
     color: tuple[int, int, int]
     prototype: Prototype = field(default_factory=Prototype)
-    units: list[float] = field(default_factory=list)   # frozen kWh per built unit
+    units: list[float] = field(default_factory=list)   # frozen kW per built unit
     hand: list[Card] = field(default_factory=list)
     farm_bonus: float = 0.0        # additive; total multiplier = 1.0 + farm_bonus
     halved_turns: int = 0          # Dust Storm effect (turns remaining)
@@ -24,7 +24,7 @@ class Player:
         return raw * (1.0 + self.farm_bonus)
 
     def build_unit(self) -> float:
-        """Snapshot the prototype's current output as a new frozen unit. Returns kWh."""
+        """Snapshot the prototype's current output as a new frozen unit. Returns kW."""
         kwh = self.prototype.kwh_output()
         self.units.append(kwh)
         return kwh

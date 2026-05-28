@@ -143,7 +143,7 @@ class TurnEngine:
     # ── Build ─────────────────────────────────────────────────────────────────
 
     def perform_build(self) -> bool:
-        """Build a unit from the current prototype output. Freezes that kWh as score."""
+        """Build a unit from the current prototype output. Freezes that kW as score."""
         s = self.state
         if s.phase != Phase.ACTION or s.actions_remaining <= 0:
             return False
@@ -153,7 +153,7 @@ class TurnEngine:
             return False
         kwh = p.build_unit()
         s.last_event_message = (
-            f'{p.name} built a unit: {kwh:.2f} kWh  '
+            f'{p.name} built a unit: {kwh:.2f} kW  '
             f'(total output now {p.total_output():.2f} kW)'
         )
         s.actions_remaining -= 1

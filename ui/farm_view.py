@@ -148,7 +148,7 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, 
 
     kwh_out = proto.kwh_output()
     title = F.get('bold').render(
-        f'PROTOTYPE  —  Next unit value: {kwh_out:.3f} kWh',
+        f'PROTOTYPE  —  Next unit value: {kwh_out:.3f} kW',
         True, C.TEXT_GOLD,
     )
     surf.blit(title, (proto_bg.x + 10, proto_bg.y + 12))
@@ -189,7 +189,7 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, 
             pygame.draw.rect(surf, col, rect, 2, border_radius=6)
             val = F.get('bold').render(f'{kwh:.2f}', True, C.TEXT_GOLD)
             surf.blit(val, (rect.centerx - val.get_width() // 2, rect.y + 8))
-            lbl = F.get('tiny').render('kWh', True, C.TEXT_DIM)
+            lbl = F.get('tiny').render('kW', True, C.TEXT_DIM)
             surf.blit(lbl, (rect.centerx - lbl.get_width() // 2, rect.y + 32))
 
     if p.blocked_areas:

@@ -1,4 +1,3 @@
-import math
 import pygame
 
 from game.state import GameState, RACE_TARGET_KW
@@ -8,32 +7,10 @@ import ui.layout as L
 import ui.assets as A
 
 
-_MILESTONES = [0, 5, 10, 15, int(RACE_TARGET_KW)]
-
-
-def _star(cx: int, cy: int, outer: int, inner: int) -> list:
-    pts = []
-    for i in range(10):
-        angle = math.pi / 2 + i * math.pi / 5
-        r = outer if i % 2 == 0 else inner
-        pts.append((cx + r * math.cos(angle), cy - r * math.sin(angle)))
-    return pts
-
-
 def draw(surf: pygame.Surface, state: GameState) -> list[pygame.Rect]:
     """Draw the progress track. Returns player token rects for click detection."""
     rail = A.get('track_rail', L.TRACK_USABLE, 34)
     surf.blit(rail, (L.TRACK_X0, L.TRACK_Y - 17))
-
-    # Milestone markers
-    for kw in _MILESTONES:
-        x = L.kwh_to_x(kw, RACE_TARGET_KW)
-        is_target = (kw == RACE_TARGET_KW)
-        color = C.TEXT_GOLD if is_target else C.TEXT_DIM
-        tick_h = 12 if is_target else 7
-        pygame.draw.line(surf, color, (x, L.TRACK_Y - tick_h), (x, L.TRACK_Y + tick_h), 2)
-        lbl = F.get('tiny').render(f'{int(kw)} kW', True, color)
-        surf.blit(lbl, (x - lbl.get_width() // 2, L.TRACK_Y + 16))
 
     # Goal star
     x_goal = L.kwh_to_x(RACE_TARGET_KW, RACE_TARGET_KW)
@@ -62,7 +39,7 @@ def draw(surf: pygame.Surface, state: GameState) -> list[pygame.Rect]:
     # Info strip
     p = state.current_player
     info = (
-        f'Round {state.round_number}/20   |   '
+        f'Round {state.round_number}/{RACE_TARGET_KW}   |   '
         f'{p.name}\'s Turn   |   '
         f'Actions: {state.actions_remaining}'
     )

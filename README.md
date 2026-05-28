@@ -50,7 +50,7 @@ Each slot can hold one research card. The prototype's output is the **product** 
 | Perovskite | ×2.0 | Al₂O₃ | ×1.45 | HJT | ×1.6 |
 | GaAs Multi-Jct | ×2.8 | Advanced Stack | ×1.65 | IBC | ×1.9 |
 
-A fully upgraded prototype outputs **2.8 × 1.65 × 1.9 ≈ 8.77 kWh** per unit built.
+A fully upgraded prototype outputs **2.8 × 1.65 × 1.9 ≈ 8.77 kW** per unit built.b
 
 ### Building units
 

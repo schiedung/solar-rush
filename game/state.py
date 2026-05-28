@@ -7,7 +7,7 @@ from game.deck import Deck
 from game.player import Player
 
 
-RACE_TARGET_KW = 20.0
+RACE_TARGET_KW = 50
 MAX_ROUNDS = 20
 
 PLAYER_COLORS = [
