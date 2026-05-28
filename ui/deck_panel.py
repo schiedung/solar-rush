@@ -51,9 +51,6 @@ def _draw_button(
         tag = F.get('tiny').render('BLOCKED', True, C.TEXT_RED)
         surf.blit(tag, (rect.x + 14, rect.y + 50))
 
-    hint = F.get('tiny').render('DRAW', True, C.TEXT_DIM)
-    surf.blit(hint, (stack_x + 17 - hint.get_width() // 2, rect.y + 6))
-
 
 def draw(
     surf: pygame.Surface,
