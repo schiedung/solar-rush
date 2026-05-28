@@ -87,6 +87,10 @@ pip install pygame
 python main.py
 ```
 
+Or with `uv`:
+```bash
+uv run main.py
+```
 ---
 
 ## Controls
