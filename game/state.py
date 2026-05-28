@@ -49,11 +49,8 @@ class GameState:
     def opponent_indices(self) -> list[int]:
         return [i for i in range(len(self.players)) if i != self.current_player_idx]
 
-    def check_win(self) -> Optional[Player]:
-        for p in self.players:
-            if p.total_output() >= RACE_TARGET_KW:
-                return p
-        return None
+    def check_win(self, player) -> Optional[Player]:
+        return player.total_output() >= RACE_TARGET_KW
 
 
 def make_game(num_players: int, ai_strategies: dict[int, str] | None = None) -> GameState:

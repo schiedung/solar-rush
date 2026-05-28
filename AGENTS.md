@@ -123,7 +123,7 @@ ACTION
                                   └─ click Continue → ACTION (next player)
 ```
 
-`GAME_OVER` is entered from any state where `check_win()` returns a player, or when round 20 ends and all players have taken their final turn.
+`GAME_OVER` is entered from any state where `check_win()` returns true, or when round 20 ends and all players have taken their final turn.
 
 ---
 
