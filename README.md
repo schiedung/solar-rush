@@ -91,6 +91,25 @@ Or with `uv`:
 ```bash
 uv run main.py
 ```
+
+## Balance simulation
+
+Run Monte Carlo simulations against the real game engine:
+
+```bash
+python scripts/simulate_balance.py --games 1000
+```
+
+Compare specific table strategies by passing one strategy per player:
+
+```bash
+python scripts/simulate_balance.py --games 5000 --strategies rush balanced tech engineering
+python scripts/simulate_balance.py --games 5000 --strategies balanced aggressive tech
+```
+
+Available strategies are `rush`, `balanced`, `tech`, `engineering`, and `aggressive`.
+Seats rotate by default between games; add `--fixed-seats` to preserve the listed player order.
+
 ---
 
 ## Controls
