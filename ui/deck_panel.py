@@ -90,7 +90,7 @@ def draw(
     _draw_action_btn(surf, L.PASS_BTN, 'Pass Action',
                      can_act, mouse_pos)
     _draw_action_btn(surf, L.FINISH_TURN_BTN, 'Finish Turn',
-                     phase == Phase.HANDOFF, mouse_pos, C.BTN_CONFIRM)
+                     phase == Phase.ACTION, mouse_pos, C.BTN_CONFIRM)
 
     status = _status_text(state)
     st = F.get('small').render(status, True, C.TEXT_DIM)
@@ -149,6 +149,8 @@ def _status_text(state: GameState) -> str:
     if phase == Phase.ACTION:
         if p.block_build:
             return f'Actions: {state.actions_remaining}  |  Grid Failure — Build blocked!'
+        if state.actions_remaining <= 0:
+            return 'No actions left — swap prototype cards or Finish Turn'
         return f'Actions remaining: {state.actions_remaining}  |  Click a card, deck, or button'
     if phase == Phase.TARGETING_PLAYER:
         return f'Select a target player for: {state.selected_card.name}'

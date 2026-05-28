@@ -49,6 +49,10 @@ def handle_click(
             if ubtn.collidepoint(pos):
                 engine.perform_unslot(slot_key)
                 return
+        # Finish Turn button
+        if L.FINISH_TURN_BTN.collidepoint(pos):
+            engine.finish_turn()
+            return
         # Deck draw buttons
         for area, rect in L.DECK_RECTS.items():
             if rect.collidepoint(pos):
