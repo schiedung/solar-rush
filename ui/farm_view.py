@@ -66,15 +66,18 @@ def _draw_slot(
     card,
     tier_data: list,
     mouse_pos: tuple,
-) -> pygame.Rect | None:
-    """Draw one prototype slot. Returns the unslot button rect if slot is filled."""
+) -> tuple:
+    """Draw one prototype slot. Returns (unslot_btn_rect_or_None, is_hovered_on_card)."""
     area_color = C.AREA.get(area, C.CELL_BORDER)
     area_dark  = C.AREA_DARK.get(area, C.CELL_BG)
     area_label = C.AREA_LABEL.get(area, area)
 
     has_card = card is not None
+    is_hovered = has_card and rect.collidepoint(mouse_pos)
     bg = area_dark if has_card else C.CELL_BG
     border = area_color if has_card else (40, 55, 90)
+    if is_hovered:
+        border = C.WHITE
     border_w = 2 if has_card else 1
 
     pygame.draw.rect(surf, bg, rect, border_radius=8)
@@ -115,12 +118,12 @@ def _draw_slot(
         hint = F.get('tiny').render(f'Play a {area_label} card', True, (50, 65, 100))
         surf.blit(hint, (rect.centerx - hint.get_width() // 2, rect.centery + 26))
 
-    return unslot_btn
+    return (unslot_btn, is_hovered)
 
 
-def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, pygame.Rect]:
+def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict:
     """Draw the current player's prototype panel and built-units grid.
-    Returns dict of slot_key → unslot button rect for filled slots."""
+    Returns dict with 'unslot_rects' and 'hovered_card'."""
     p = state.current_player
     proto = p.prototype
 
@@ -140,11 +143,14 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, 
     }
     cards = (proto.junction_card, proto.optical_card, proto.contact_card)
     slot_rects: dict[str, pygame.Rect] = {}
+    hovered_card = None
     for k, (slot_key, area, card) in enumerate(zip(SLOT_KEYS, SLOT_AREAS, cards)):
-        ubtn = _draw_slot(surf, _slot_rect(k), slot_key, area, card,
+        ubtn, slot_hovered = _draw_slot(surf, _slot_rect(k), slot_key, area, card,
                           tier_data_map[slot_key], mouse_pos)
         if ubtn is not None:
             slot_rects[slot_key] = ubtn
+        if slot_hovered and card is not None:
+            hovered_card = card
 
     # ── Built units ──────────────────────────────────────────────────────────
     units_label = F.get('body').render(
@@ -183,4 +189,4 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, 
         bb_surf = F.get('tiny').render('GRID FAILURE — Build blocked this turn', True, C.TEXT_RED)
         surf.blit(bb_surf, (UNIT_X0, L.TOPBAR_H + L.MAIN_H - 34))
 
-    return slot_rects
+    return {'unslot_rects': slot_rects, 'hovered_card': hovered_card}

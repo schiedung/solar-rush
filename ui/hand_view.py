@@ -104,18 +104,21 @@ def draw(
     surf: pygame.Surface,
     state: GameState,
     mouse_pos: tuple[int, int],
-) -> list[pygame.Rect]:
-    """Draw the current player's hand. Returns card rects in hand order."""
+) -> dict:
+    """Draw the current player's hand. Returns dict with 'rects' and 'hovered_card'."""
     hand = state.current_player.hand
     selected_card = state.selected_card
 
     card_rects: list[pygame.Rect] = []
+    hovered_card = None
     for i, card in enumerate(hand):
         rect = L.hand_rect(i, len(hand))
         hovered = rect.collidepoint(mouse_pos)
         selected = card is selected_card
         _draw_card(surf, card, rect, hovered, selected)
         card_rects.append(rect)
+        if hovered:
+            hovered_card = card
 
     hand_lbl = F.get('tiny').render(
         f'Hand  ({len(hand)} cards)  —  slot cards are free; Draw / Build cost actions',
@@ -123,4 +126,4 @@ def draw(
     )
     surf.blit(hand_lbl, (L.HAND_PANEL_X + 8, L.TOPBAR_H + L.MAIN_H + 4))
 
-    return card_rects
+    return {'rects': card_rects, 'hovered_card': hovered_card}

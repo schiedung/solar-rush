@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 import pygame
 
+from game.card import Card
 from game.state import GameState, Phase
 import ui.colors as C
 import ui.fonts as F
@@ -11,6 +12,7 @@ import ui.farm_view as farm_view
 import ui.hand_view as hand_view
 import ui.deck_panel as deck_panel
 import ui.event_overlay as overlay
+import ui.tooltip as tooltip
 
 
 @dataclass
@@ -22,6 +24,7 @@ class UIRects:
     slot_rects: dict[str, pygame.Rect] = field(default_factory=dict)
     handoff_btn: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
     play_again_btn: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
+    hovered_card: Card | None = None
 
 
 def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
@@ -29,9 +32,14 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
     rects = UIRects()
 
     rects.token_rects = track_view.draw(surf, state)
-    rects.slot_rects = farm_view.draw(surf, state, mouse_pos)
+    slot_result = farm_view.draw(surf, state, mouse_pos)
+    rects.slot_rects = slot_result['unslot_rects']
+    rects.hovered_card = slot_result.get('hovered_card')
     deck_panel.draw(surf, state, mouse_pos)
-    rects.hand_rects = hand_view.draw(surf, state, mouse_pos)
+    hand_result = hand_view.draw(surf, state, mouse_pos)
+    rects.hand_rects = hand_result['rects']
+    if hand_result.get('hovered_card'):
+        rects.hovered_card = hand_result['hovered_card']
 
     phase = state.phase
     if phase == Phase.HANDOFF:
@@ -42,5 +50,8 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
         rects.research_rects = overlay.draw_research_choose(surf, state, mouse_pos)
     elif phase == Phase.TARGETING_PLAYER:
         rects.player_target_rects = overlay.draw_player_target(surf, state, mouse_pos)
+
+    if rects.hovered_card and phase in (Phase.ACTION, Phase.TARGETING_PLAYER):
+        tooltip.draw_tooltip(surf, rects.hovered_card, mouse_pos)
 
     return rects
