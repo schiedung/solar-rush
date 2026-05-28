@@ -21,35 +21,6 @@ def _panel(surf: pygame.Surface, w: int, h: int) -> pygame.Rect:
     return rect
 
 
-def draw_handoff(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> pygame.Rect:
-    _dim_screen(surf)
-    panel = _panel(surf, 480, 240)
-
-    idx = (state.current_player_idx + 1) % len(state.players)
-    next_p = state.players[idx]
-
-    title = F.get('title').render('Turn Complete!', True, C.TEXT_GOLD)
-    surf.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 28))
-
-    sub = F.get('large').render(f'Pass to  {next_p.name}', True, C.TEXT_MAIN)
-    surf.blit(sub, (panel.centerx - sub.get_width() // 2, panel.y + 80))
-
-    cur = state.current_player
-    score_line = F.get('body').render(
-        f'{cur.name} output: {cur.total_output():.2f} kW',
-        True, C.TEXT_DIM,
-    )
-    surf.blit(score_line, (panel.centerx - score_line.get_width() // 2, panel.y + 118))
-
-    btn = L.CONTINUE_BTN
-    hovered = btn.collidepoint(mouse_pos)
-    pygame.draw.rect(surf, C.BTN_HOVER if hovered else C.BTN_CONFIRM, btn, border_radius=8)
-    pygame.draw.rect(surf, C.WHITE, btn, 2, border_radius=8)
-    lbl = F.get('large').render('Continue  ▶', True, C.WHITE)
-    surf.blit(lbl, (btn.centerx - lbl.get_width() // 2, btn.centery - lbl.get_height() // 2))
-
-    return btn
-
 
 def draw_game_over(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> pygame.Rect:
     _dim_screen(surf)

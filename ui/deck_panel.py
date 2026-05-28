@@ -93,6 +93,8 @@ def draw(
                      can_act and state.actions_remaining >= 2, mouse_pos)
     _draw_action_btn(surf, L.PASS_BTN, 'Pass Action',
                      can_act, mouse_pos)
+    _draw_action_btn(surf, L.FINISH_TURN_BTN, 'Finish Turn  ▶',
+                     phase == Phase.HANDOFF, mouse_pos, C.BTN_CONFIRM)
 
     status = _status_text(state)
     st = F.get('small').render(status, True, C.TEXT_DIM)
@@ -143,4 +145,6 @@ def _status_text(state: GameState) -> str:
         return 'Research: select a deck to peek 3 cards'
     if phase == Phase.RESEARCH_CHOOSE:
         return 'Research: click a card to keep it'
+    if phase == Phase.HANDOFF:
+        return 'Turn complete — click Finish Turn to pass'
     return ''
