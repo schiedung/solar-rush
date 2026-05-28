@@ -7,22 +7,25 @@ import ui.fonts as F
 import ui.layout as L
 
 # ── Prototype panel geometry ─────────────────────────────────────────────────
-PROTO_Y      = L.TOPBAR_H + 4
-PROTO_H      = 182
-SLOT_Y       = PROTO_Y + 32
-SLOT_H       = 118
-SLOT_W       = 220
-SLOT_GAP     = 10
-SLOT_X0      = (L.FARM_W - (3 * SLOT_W + 2 * SLOT_GAP)) // 2
+PROTO_X      = 34
+PROTO_Y      = L.TOPBAR_H + 20
+PROTO_W      = 342
+PROTO_H      = 336
+SLOT_Y       = PROTO_Y + 48
+SLOT_H       = 86
+SLOT_W       = PROTO_W
+SLOT_GAP     = 8
+SLOT_X0      = PROTO_X
 
 SLOT_KEYS    = ('junction', 'optical', 'contact')
 SLOT_AREAS   = ('material_science', 'chemistry', 'physics')
 
 # ── Units grid geometry ───────────────────────────────────────────────────────
-UNIT_Y0      = PROTO_Y + PROTO_H + 6
+UNIT_X0      = 420
+UNIT_Y0      = L.TOPBAR_H + 270
 UNIT_W, UNIT_H = 78, 58
 UNIT_GAP     = 8
-UNITS_PER_ROW = (L.FARM_W - 10) // (UNIT_W + UNIT_GAP)
+UNITS_PER_ROW = 6
 
 _UNSLOT_W, _UNSLOT_H = 28, 18
 
@@ -36,8 +39,8 @@ def _unit_color(kwh: float) -> tuple:
 
 
 def _slot_rect(k: int) -> pygame.Rect:
-    x = SLOT_X0 + k * (SLOT_W + SLOT_GAP)
-    return pygame.Rect(x, SLOT_Y, SLOT_W, SLOT_H)
+    y = SLOT_Y + k * (SLOT_H + SLOT_GAP)
+    return pygame.Rect(SLOT_X0, y, SLOT_W, SLOT_H)
 
 
 def _unslot_rect(slot_rect: pygame.Rect) -> pygame.Rect:
@@ -50,7 +53,7 @@ def _unslot_rect(slot_rect: pygame.Rect) -> pygame.Rect:
 
 def _unit_rect(idx: int) -> pygame.Rect:
     row, col = divmod(idx, UNITS_PER_ROW)
-    x = 8 + col * (UNIT_W + UNIT_GAP)
+    x = UNIT_X0 + col * (UNIT_W + UNIT_GAP)
     y = UNIT_Y0 + row * (UNIT_H + UNIT_GAP)
     return pygame.Rect(x, y, UNIT_W, UNIT_H)
 
@@ -134,26 +137,21 @@ def _draw_slot(
 def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, pygame.Rect]:
     """Draw the current player's prototype panel and built-units grid.
     Returns dict of slot_key → unslot button rect for filled slots."""
-    farm_overlay = pygame.Surface((L.FARM_W, L.MAIN_H), pygame.SRCALPHA)
-    farm_overlay.fill((*C.FARM_BG, 175))
-    surf.blit(farm_overlay, (0, L.TOPBAR_H))
-    pygame.draw.line(surf, C.DIVIDER, (L.FARM_W, L.TOPBAR_H), (L.FARM_W, L.TOPBAR_H + L.MAIN_H), 2)
-
     p = state.current_player
     proto = p.prototype
 
-    proto_bg = pygame.Rect(4, PROTO_Y, L.FARM_W - 8, PROTO_H)
-    proto_panel = pygame.Surface((proto_bg.width, proto_bg.height), pygame.SRCALPHA)
-    pygame.draw.rect(proto_panel, (*C.BASE02, 220), proto_panel.get_rect(), border_radius=10)
+    proto_bg = pygame.Rect(PROTO_X, PROTO_Y, PROTO_W, PROTO_H)
+    proto_panel = pygame.Surface((PROTO_W, PROTO_H), pygame.SRCALPHA)
+    pygame.draw.rect(proto_panel, (*C.BASE02, 96), proto_panel.get_rect(), border_radius=10)
     surf.blit(proto_panel, proto_bg)
-    pygame.draw.rect(surf, C.BLUE, proto_bg, 1, border_radius=10)
+    pygame.draw.rect(surf, (*C.BLUE, 150), proto_bg, 1, border_radius=10)
 
     kwh_out = proto.kwh_output()
     title = F.get('bold').render(
         f'PROTOTYPE  —  Next unit value: {kwh_out:.3f} kWh',
         True, C.TEXT_GOLD,
     )
-    surf.blit(title, (proto_bg.x + 10, proto_bg.y + 6))
+    surf.blit(title, (proto_bg.x + 10, proto_bg.y + 12))
 
     tier_data_map = {
         'junction': JUNCTION_TIERS,
@@ -175,11 +173,11 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, 
         f'Bonus: ×{1.0 + p.farm_bonus:.2f}',
         True, C.TEXT_DIM,
     )
-    surf.blit(units_label, (8, UNIT_Y0 - 20))
+    surf.blit(units_label, (UNIT_X0, UNIT_Y0 - 24))
 
     if not p.units:
         no_units = F.get('body').render('No units built yet — use the Build action!', True, (50, 65, 100))
-        surf.blit(no_units, (8, UNIT_Y0 + 10))
+        surf.blit(no_units, (UNIT_X0, UNIT_Y0 + 10))
     else:
         for i, kwh in enumerate(p.units):
             rect = _unit_rect(i)
@@ -199,10 +197,10 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict[str, 
             C.AREA_LABEL.get(a, a) for a in p.blocked_areas if a in C.AREA_LABEL
         )
         b_surf = F.get('tiny').render(blocked_txt, True, C.TEXT_RED)
-        surf.blit(b_surf, (8, L.TOPBAR_H + L.MAIN_H - 18))
+        surf.blit(b_surf, (UNIT_X0, L.TOPBAR_H + L.MAIN_H - 18))
 
     if p.block_build:
         bb_surf = F.get('tiny').render('GRID FAILURE — Build blocked this turn', True, C.TEXT_RED)
-        surf.blit(bb_surf, (8, L.TOPBAR_H + L.MAIN_H - 34))
+        surf.blit(bb_surf, (UNIT_X0, L.TOPBAR_H + L.MAIN_H - 34))
 
     return slot_rects

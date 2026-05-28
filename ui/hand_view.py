@@ -90,13 +90,6 @@ def draw(
     mouse_pos: tuple[int, int],
 ) -> list[pygame.Rect]:
     """Draw the current player's hand. Returns card rects in hand order."""
-    hand_overlay = pygame.Surface((L.SW, L.HAND_H), pygame.SRCALPHA)
-    hand_overlay.fill((*C.HAND_BG, 210))
-    surf.blit(hand_overlay, (0, L.TOPBAR_H + L.MAIN_H))
-    pygame.draw.line(surf, C.DIVIDER,
-                     (0, L.TOPBAR_H + L.MAIN_H),
-                     (L.SW, L.TOPBAR_H + L.MAIN_H), 2)
-
     hand = state.current_player.hand
     selected_card = state.selected_card
 
@@ -112,6 +105,6 @@ def draw(
         f'Hand  ({len(hand)} cards)  —  slot cards are free; Draw / Build cost actions',
         True, C.TEXT_DIM,
     )
-    surf.blit(hand_lbl, (8, L.TOPBAR_H + L.MAIN_H + 4))
+    surf.blit(hand_lbl, (L.HAND_PANEL_X + 8, L.TOPBAR_H + L.MAIN_H + 4))
 
     return card_rects

@@ -29,11 +29,11 @@ def _draw_button(
     pygame.draw.rect(surf, C.AREA.get(area, C.BTN_BORDER),
                      (rect.x, rect.y, 6, rect.height), border_radius=4)
 
-    card_back = A.get('card_back', 40, 55)
-    stack_x = rect.right - 58
-    stack_y = rect.y + 20
+    card_back = A.get('card_back', 34, 48)
+    stack_x = rect.right - 46
+    stack_y = rect.y + 22
     for offset in (8, 4, 0):
-        back_rect = pygame.Rect(stack_x - offset, stack_y - offset, 40, 55)
+        back_rect = pygame.Rect(stack_x - offset, stack_y - offset, 34, 48)
         surf.blit(card_back, back_rect)
         pygame.draw.rect(surf, border, back_rect, 1, border_radius=4)
 
@@ -42,17 +42,17 @@ def _draw_button(
     surf.blit(name_surf, (rect.x + 14, rect.y + 8))
 
     count_surf = F.get('small').render(f'{deck_len} cards', True, C.TEXT_DIM)
-    surf.blit(count_surf, (rect.x + 14, rect.y + 28))
+    surf.blit(count_surf, (rect.x + 14, rect.y + 30))
 
     if research_mode:
         tag = F.get('tiny').render('RESEARCH ×2', True, C.TEXT_GOLD)
-        surf.blit(tag, (rect.x + 14, rect.y + 46))
+        surf.blit(tag, (rect.x + 14, rect.y + 50))
     elif not available:
         tag = F.get('tiny').render('BLOCKED', True, C.TEXT_RED)
-        surf.blit(tag, (rect.x + 14, rect.y + 46))
+        surf.blit(tag, (rect.x + 14, rect.y + 50))
 
     hint = F.get('tiny').render('DRAW', True, C.TEXT_DIM)
-    surf.blit(hint, (stack_x + 20 - hint.get_width() // 2, rect.y + 6))
+    surf.blit(hint, (stack_x + 17 - hint.get_width() // 2, rect.y + 6))
 
 
 def draw(
@@ -60,10 +60,6 @@ def draw(
     state: GameState,
     mouse_pos: tuple[int, int],
 ) -> None:
-    panel = pygame.Surface((L.PANEL_W, L.MAIN_H), pygame.SRCALPHA)
-    panel.fill((*C.PANEL_BG, 205))
-    surf.blit(panel, (L.FARM_W, L.TOPBAR_H))
-
     p = state.current_player
     phase = state.phase
     research_mode = phase == Phase.RESEARCH_PICK_AREA
@@ -89,16 +85,16 @@ def draw(
     _draw_action_btn(surf, L.BUILD_BTN, 'Build Cell',
                      can_build, mouse_pos, C.BTN_CONFIRM)
     _draw_action_btn(surf, L.RESEARCH_BTN,
-                     'Research  (costs 2)',
+                     'Research',
                      can_act and state.actions_remaining >= 2, mouse_pos)
     _draw_action_btn(surf, L.PASS_BTN, 'Pass Action',
                      can_act, mouse_pos)
-    _draw_action_btn(surf, L.FINISH_TURN_BTN, 'Finish Turn  ▶',
+    _draw_action_btn(surf, L.FINISH_TURN_BTN, 'Finish Turn',
                      phase == Phase.HANDOFF, mouse_pos, C.BTN_CONFIRM)
 
     status = _status_text(state)
     st = F.get('small').render(status, True, C.TEXT_DIM)
-    surf.blit(st, (L.ACTION_X, L.STATUS_TEXT_Y))
+    _blit_clipped(surf, st, pygame.Rect(L.ACTION_X, L.STATUS_TEXT_Y, 310, st.get_height()))
 
     # Score board — current output (kW)
     y = L.SCOREBOARD_Y
@@ -109,7 +105,7 @@ def draw(
         line = F.get('body').render(
             f'{arrow}{player.name}: {player.total_output():.2f} kW', True, color
         )
-        surf.blit(line, (L.ACTION_X, y + i * 19))
+        _blit_clipped(surf, line, pygame.Rect(L.ACTION_X, y + i * 19, 310, line.get_height()))
 
 
 def _draw_action_btn(
@@ -130,6 +126,10 @@ def _draw_action_btn(
     lbl = F.get('bold').render(label, True, C.TEXT_MAIN if enabled else C.TEXT_DIM)
     surf.blit(lbl, (rect.centerx - lbl.get_width() // 2,
                     rect.centery - lbl.get_height() // 2))
+
+
+def _blit_clipped(surf: pygame.Surface, text_surf: pygame.Surface, rect: pygame.Rect) -> None:
+    surf.blit(text_surf, rect.topleft, area=pygame.Rect(0, 0, rect.width, rect.height))
 
 
 def _status_text(state: GameState) -> str:

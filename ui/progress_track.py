@@ -22,16 +22,6 @@ def _star(cx: int, cy: int, outer: int, inner: int) -> list:
 
 def draw(surf: pygame.Surface, state: GameState) -> list[pygame.Rect]:
     """Draw the progress track. Returns player token rects for click detection."""
-    top_overlay = pygame.Surface((L.SW, L.TOPBAR_H), pygame.SRCALPHA)
-    top_overlay.fill((*C.TOPBAR_BG, 150))
-    surf.blit(top_overlay, (0, 0))
-
-    track_bg = pygame.Surface((L.SW - 36, 68), pygame.SRCALPHA)
-    pygame.draw.rect(track_bg, (*C.TRACK_BG, 185), track_bg.get_rect(), border_radius=8)
-    pygame.draw.rect(track_bg, (*C.TEXT_GOLD, 95), track_bg.get_rect(), 1, border_radius=8)
-    surf.blit(track_bg, (18, 5))
-
-    # Rail line
     rail = A.get('track_rail', L.TRACK_USABLE, 34)
     surf.blit(rail, (L.TRACK_X0, L.TRACK_Y - 17))
 
