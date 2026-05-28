@@ -3,6 +3,7 @@ import pygame
 
 from game.state import make_game, Phase
 from game.engine import TurnEngine
+from game.ai import STRATEGIES, take_turn_action
 import ui.fonts as F
 import ui.assets as A
 import ui.renderer as R
@@ -11,6 +12,7 @@ import ui.layout as L
 TITLE = 'Solar Rush — Research & Build'
 FPS = 60
 LOGICAL_W, LOGICAL_H = L.SW, L.SH
+AI_ACTION_SLEEP_SECONDS = 3.0
 
 _fullscreen = False
 
@@ -28,8 +30,8 @@ def _scale_mouse(pos: tuple[int, int], screen: pygame.Surface) -> tuple[int, int
     return (int(pos[0] * LOGICAL_W / sw), int(pos[1] * LOGICAL_H / sh))
 
 
-def reset_game(num_players: int):
-    state = make_game(num_players)
+def reset_game(num_players: int, ai_strategies: dict[int, str] | None = None):
+    state = make_game(num_players, ai_strategies)
     engine = TurnEngine(state)
     engine.begin_turn()
     return state, engine
@@ -102,6 +104,130 @@ def handle_click(
             return 'reset'
 
 
+def _draw_menu_button(
+    surf: pygame.Surface,
+    rect: pygame.Rect,
+    label: str,
+    mouse: tuple[int, int],
+    color: tuple[int, int, int],
+) -> None:
+    import ui.colors as C
+    hovered = rect.collidepoint(mouse)
+    pygame.draw.rect(surf, C.BTN_HOVER if hovered else C.BTN_NORMAL, rect, border_radius=8)
+    pygame.draw.rect(surf, color, rect, 2, border_radius=8)
+    text = F.get('large').render(label, True, color)
+    surf.blit(text, (rect.centerx - text.get_width() // 2, rect.centery - text.get_height() // 2))
+
+
+def _mode_screen(
+    logical: pygame.Surface,
+    screen: pygame.Surface,
+    clock: pygame.time.Clock,
+) -> str:
+    import ui.colors as C
+    btns = {
+        'pc': pygame.Rect(LOGICAL_W // 2 - 230, LOGICAL_H // 2 - 28, 200, 60),
+        'hotseat': pygame.Rect(LOGICAL_W // 2 + 30, LOGICAL_H // 2 - 28, 200, 60),
+    }
+    labels = {'pc': '1P vs PC', 'hotseat': 'Hot Seat'}
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit(0)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_f and (event.mod & pygame.KMOD_CTRL):
+                    screen = _toggle_fullscreen(screen)
+                elif event.key == pygame.K_q and (event.mod & pygame.KMOD_CTRL):
+                    pygame.quit()
+                    sys.exit(0)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                lpos = _scale_mouse(event.pos, screen)
+                for mode, rect in btns.items():
+                    if rect.collidepoint(lpos):
+                        return mode
+
+        mouse = _scale_mouse(pygame.mouse.get_pos(), screen)
+        logical.blit(A.get('background', LOGICAL_W, LOGICAL_H), (0, 0))
+        shade = pygame.Surface((LOGICAL_W, LOGICAL_H), pygame.SRCALPHA)
+        shade.fill((*C.BG, 155))
+        logical.blit(shade, (0, 0))
+
+        logo = A.get('logo', 420, 218)
+        logical.blit(logo, (LOGICAL_W // 2 - logo.get_width() // 2, LOGICAL_H // 2 - 245))
+
+        title = F.get('large').render('Choose a game mode', True, C.TEXT_MAIN)
+        logical.blit(title, (LOGICAL_W // 2 - title.get_width() // 2, LOGICAL_H // 2 - 82))
+
+        for mode, rect in btns.items():
+            _draw_menu_button(logical, rect, labels[mode], mouse, C.TEXT_GOLD)
+
+        pygame.transform.scale(logical, screen.get_size(), screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def _pc_strategy_screen(
+    logical: pygame.Surface,
+    screen: pygame.Surface,
+    clock: pygame.time.Clock,
+) -> str:
+    import ui.colors as C
+    names = list(STRATEGIES)
+    btns = {
+        name: pygame.Rect(LOGICAL_W // 2 - 190, 230 + i * 66, 380, 52)
+        for i, name in enumerate(names)
+    }
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit(0)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return ''
+                if event.key == pygame.K_f and (event.mod & pygame.KMOD_CTRL):
+                    screen = _toggle_fullscreen(screen)
+                elif event.key == pygame.K_q and (event.mod & pygame.KMOD_CTRL):
+                    pygame.quit()
+                    sys.exit(0)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                lpos = _scale_mouse(event.pos, screen)
+                for name, rect in btns.items():
+                    if rect.collidepoint(lpos):
+                        return name
+
+        mouse = _scale_mouse(pygame.mouse.get_pos(), screen)
+        logical.blit(A.get('background', LOGICAL_W, LOGICAL_H), (0, 0))
+        shade = pygame.Surface((LOGICAL_W, LOGICAL_H), pygame.SRCALPHA)
+        shade.fill((*C.BG, 155))
+        logical.blit(shade, (0, 0))
+
+        title = F.get('large').render('Choose PC strategy', True, C.TEXT_MAIN)
+        logical.blit(title, (LOGICAL_W // 2 - title.get_width() // 2, 154))
+        for name, rect in btns.items():
+            _draw_menu_button(logical, rect, name.title(), mouse, C.TEXT_GOLD)
+            desc = F.get('tiny').render(STRATEGIES[name].description, True, C.TEXT_DIM)
+            logical.blit(desc, (LOGICAL_W // 2 - desc.get_width() // 2, rect.bottom + 4))
+
+        pygame.transform.scale(logical, screen.get_size(), screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def _setup_screen(
+    logical: pygame.Surface,
+    screen: pygame.Surface,
+    clock: pygame.time.Clock,
+) -> tuple[int, dict[int, str]]:
+    mode = _mode_screen(logical, screen, clock)
+    if mode == 'pc':
+        strategy = _pc_strategy_screen(logical, screen, clock)
+        if strategy:
+            return 2, {1: strategy}
+    return _player_count_screen(logical, screen, clock), {}
+
+
 def _player_count_screen(
     logical: pygame.Surface,
     screen: pygame.Surface,
@@ -172,8 +298,8 @@ def main() -> None:
 
     logical = pygame.Surface((LOGICAL_W, LOGICAL_H))
 
-    num_players = _player_count_screen(logical, screen, clock)
-    state, engine = reset_game(num_players)
+    num_players, ai_strategies = _setup_screen(logical, screen, clock)
+    state, engine = reset_game(num_players, ai_strategies)
     rects = R.UIRects()
 
     while True:
@@ -194,12 +320,22 @@ def main() -> None:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 lpos = _scale_mouse(event.pos, screen)
                 if event.button == 1:
-                    result = handle_click(lpos, state, engine, rects)
+                    result = None
+                    if not state.current_player.is_ai or state.phase == Phase.GAME_OVER:
+                        result = handle_click(lpos, state, engine, rects)
                     if result == 'reset':
-                        num_players = _player_count_screen(logical, screen, clock)
-                        state, engine = reset_game(num_players)
+                        num_players, ai_strategies = _setup_screen(logical, screen, clock)
+                        state, engine = reset_game(num_players, ai_strategies)
                 elif event.button == 3:
-                    engine.deselect_card()
+                    if not state.current_player.is_ai:
+                        engine.deselect_card()
+
+        if state.phase == Phase.ACTION and state.current_player.is_ai:
+            strategy = STRATEGIES.get(state.current_player.ai_strategy, STRATEGIES['balanced'])
+            take_turn_action(engine, strategy)
+        elif state.phase == Phase.HANDOFF and state.current_player.is_ai:
+            pygame.time.wait(int(AI_ACTION_SLEEP_SECONDS * 1000))
+            engine.advance_to_next_player()
 
         rects = R.draw(logical, state, mouse_pos)
         pygame.transform.scale(logical, screen.get_size(), screen)

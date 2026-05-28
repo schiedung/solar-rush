@@ -56,10 +56,20 @@ class GameState:
         return None
 
 
-def make_game(num_players: int) -> GameState:
+def make_game(num_players: int, ai_strategies: dict[int, str] | None = None) -> GameState:
     from game.deck import build_decks
+    ai_strategies = ai_strategies or {}
     players = [
-        Player(name=f'Player {i+1}', color=PLAYER_COLORS[i])
+        Player(
+            name=(
+                f'PC {i+1} ({ai_strategies[i].title()})'
+                if i in ai_strategies
+                else f'Player {i+1}'
+            ),
+            color=PLAYER_COLORS[i],
+            is_ai=i in ai_strategies,
+            ai_strategy=ai_strategies.get(i, ''),
+        )
         for i in range(num_players)
     ]
     return GameState(players=players, decks=build_decks())

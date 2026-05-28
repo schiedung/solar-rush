@@ -36,6 +36,7 @@ class Card:
     description: str
     long_description: str
     effect: dict[str, Any]
+    long_description: str = ''
 
     def is_slot_card(self) -> bool:
         return self.effect['type'] in SLOT_TYPES

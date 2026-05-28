@@ -9,6 +9,8 @@ class Player:
     name: str
     color: tuple[int, int, int]
     prototype: Prototype = field(default_factory=Prototype)
+    is_ai: bool = False
+    ai_strategy: str = ''
     units: list[float] = field(default_factory=list)   # frozen kW per built unit
     hand: list[Card] = field(default_factory=list)
     farm_bonus: float = 0.0        # additive; total multiplier = 1.0 + farm_bonus

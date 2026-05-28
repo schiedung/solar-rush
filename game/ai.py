@@ -1,27 +1,14 @@
-"""Monte Carlo balance simulator for Solar Rush.
-
-The simulator intentionally drives the production game engine instead of a
-separate rules model. That keeps balance reports aligned with the playable game.
-"""
+"""Heuristic AI strategies shared by the simulator and PC opponents."""
 
 from __future__ import annotations
 
-import argparse
 import random
-import statistics
-import sys
-from collections import Counter, defaultdict
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Callable
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from game.card import AREAS, Card
 from game.engine import TurnEngine
-from game.state import MAX_ROUNDS, RACE_TARGET_KW, GameState, Phase, make_game
+from game.state import GameState, Phase
 
 ENGINEERING = "engineering"
 
@@ -35,50 +22,6 @@ class Strategy:
     engineering_bias: float = 0.0
     aggression: float = 0.0
     prefer_research: bool = True
-
-
-@dataclass
-class PlayerResult:
-    strategy: str
-    final_output: float
-    units: int
-    farm_bonus: float
-    prototype_output: float
-
-
-@dataclass
-class GameResult:
-    winner_idx: int
-    winner_strategy: str
-    finish_round: int
-    ended_by_race: bool
-    player_results: list[PlayerResult]
-    first_player_won: bool
-
-
-@dataclass
-class StrategyStats:
-    games: int = 0
-    wins: int = 0
-    race_wins: int = 0
-    finish_rounds: list[int] = field(default_factory=list)
-    outputs: list[float] = field(default_factory=list)
-    units: list[int] = field(default_factory=list)
-    farm_bonuses: list[float] = field(default_factory=list)
-    prototype_outputs: list[float] = field(default_factory=list)
-
-    def record_player(self, result: PlayerResult) -> None:
-        self.games += 1
-        self.outputs.append(result.final_output)
-        self.units.append(result.units)
-        self.farm_bonuses.append(result.farm_bonus)
-        self.prototype_outputs.append(result.prototype_output)
-
-    def record_win(self, finish_round: int, ended_by_race: bool) -> None:
-        self.wins += 1
-        self.finish_rounds.append(finish_round)
-        if ended_by_race:
-            self.race_wins += 1
 
 
 def early_build_threshold(state: GameState) -> float:
@@ -336,150 +279,3 @@ def take_turn_action(engine: TurnEngine, strategy: Strategy) -> None:
     if engine.perform_build():
         return
     engine.perform_pass()
-
-
-from game.ai import STRATEGIES, take_turn_action
-
-
-def simulate_game(strategy_names: list[str], seed: int | None = None) -> GameResult:
-    if seed is not None:
-        random.seed(seed)
-
-    state = make_game(len(strategy_names))
-    strategies = [STRATEGIES[name] for name in strategy_names]
-    engine = TurnEngine(state)
-
-    guard = 0
-    while state.phase != Phase.GAME_OVER:
-        guard += 1
-        if guard > 10_000:
-            raise RuntimeError("simulation did not terminate")
-
-        if state.phase == Phase.ACTION:
-            strategy = strategies[state.current_player_idx]
-            take_turn_action(engine, strategy)
-        elif state.phase == Phase.HANDOFF:
-            engine.advance_to_next_player()
-        else:
-            engine.deselect_card()
-
-    winner_idx = state.players.index(state.winner) if state.winner else 0
-    ended_by_race = bool(state.winner and state.winner.total_output() >= RACE_TARGET_KW)
-    player_results = [
-        PlayerResult(
-            strategy=strategies[idx].name,
-            final_output=player.total_output(),
-            units=len(player.units),
-            farm_bonus=player.farm_bonus,
-            prototype_output=player.prototype.kwh_output(),
-        )
-        for idx, player in enumerate(state.players)
-    ]
-    return GameResult(
-        winner_idx=winner_idx,
-        winner_strategy=strategies[winner_idx].name,
-        finish_round=state.round_number,
-        ended_by_race=ended_by_race,
-        player_results=player_results,
-        first_player_won=winner_idx == 0,
-    )
-
-
-def mean(values: list[float] | list[int]) -> float:
-    return statistics.fmean(values) if values else 0.0
-
-
-def percentile(values: list[int], pct: float) -> float:
-    if not values:
-        return 0.0
-    ordered = sorted(values)
-    idx = min(len(ordered) - 1, round((len(ordered) - 1) * pct))
-    return float(ordered[idx])
-
-
-def print_report(results: list[GameResult], strategy_names: list[str], fixed_seats: bool) -> None:
-    stats: dict[str, StrategyStats] = defaultdict(StrategyStats)
-    winner_counts = Counter(result.winner_strategy for result in results)
-    race_finishes = sum(result.ended_by_race for result in results)
-    first_player_wins = sum(result.first_player_won for result in results)
-
-    for result in results:
-        for player_result in result.player_results:
-            stats[player_result.strategy].record_player(player_result)
-        stats[result.winner_strategy].record_win(result.finish_round, result.ended_by_race)
-
-    print("Solar Rush balance simulation")
-    print(f"Games: {len(results)}")
-    print(f"Players: {len(strategy_names)} ({', '.join(strategy_names)})")
-    print(f"Seating: {'fixed' if fixed_seats else 'rotated'}")
-    print(f"Race target from code: {RACE_TARGET_KW:.1f} kW")
-    print(f"Max rounds: {MAX_ROUNDS}")
-    print(f"Race finishes: {race_finishes / len(results):.1%}")
-    print(f"First-player wins: {first_player_wins / len(results):.1%}")
-    print()
-    print("Strategy descriptions:")
-    for name in dict.fromkeys(strategy_names):
-        print(f"- {name}: {STRATEGIES[name].description}")
-    print()
-    print(
-        "strategy      games  win%   race-win%  avg finish  p90 finish  "
-        "avg output  avg units  avg bonus  avg proto"
-    )
-    print("-" * 98)
-
-    for name in sorted(stats):
-        item = stats[name]
-        print(
-            f"{name:<12} "
-            f"{item.games:>5}  "
-            f"{item.wins / item.games:>5.1%}  "
-            f"{item.race_wins / max(1, item.wins):>9.1%}  "
-            f"{mean(item.finish_rounds):>10.2f}  "
-            f"{percentile(item.finish_rounds, 0.9):>10.0f}  "
-            f"{mean(item.outputs):>10.2f}  "
-            f"{mean(item.units):>9.2f}  "
-            f"{mean(item.farm_bonuses):>9.2f}  "
-            f"{mean(item.prototype_outputs):>9.2f}"
-        )
-
-    print()
-    print("Wins by strategy:", ", ".join(f"{name}={winner_counts[name]}" for name in sorted(winner_counts)))
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--games", type=int, default=1000, help="number of games to simulate")
-    parser.add_argument("--seed", type=int, default=1, help="base random seed")
-    parser.add_argument(
-        "--strategies",
-        nargs="+",
-        default=["rush", "balanced", "tech", "engineering"],
-        choices=sorted(STRATEGIES),
-        help="one strategy per player, 2-4 entries",
-    )
-    parser.add_argument(
-        "--fixed-seats",
-        action="store_true",
-        help="keep strategies in the listed player order instead of rotating seats between games",
-    )
-    return parser.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
-    if not 2 <= len(args.strategies) <= 4:
-        raise SystemExit("--strategies must contain between 2 and 4 entries")
-
-    results = []
-    for idx in range(args.games):
-        if args.fixed_seats:
-            game_strategies = args.strategies
-        else:
-            offset = idx % len(args.strategies)
-            game_strategies = args.strategies[offset:] + args.strategies[:offset]
-        results.append(simulate_game(game_strategies, seed=args.seed + idx))
-    print_report(results, args.strategies, args.fixed_seats)
-
-
-if __name__ == "__main__":
-    main()

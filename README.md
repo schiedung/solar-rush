@@ -14,6 +14,11 @@ Be the first player to reach **20 kW of total farm output** — or have the high
 
 ## How to play
 
+Choose **1P vs PC** to play against a computer opponent, then pick one of the
+same strategies used by the balance simulator: `rush`, `balanced`, `tech`,
+`engineering`, or `aggressive`. Choose **Hot Seat** for the original local
+multiplayer setup.
+
 ### Your turn
 
 You have **2 actions** per turn. Spend them however you like:
