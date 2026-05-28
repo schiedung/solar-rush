@@ -34,7 +34,6 @@ class Card:
     tier: int
     name: str
     description: str
-    long_description: str
     effect: dict[str, Any]
     long_description: str = ''
 
