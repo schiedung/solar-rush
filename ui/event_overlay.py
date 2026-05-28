@@ -22,6 +22,18 @@ def _panel(surf: pygame.Surface, w: int, h: int) -> pygame.Rect:
     return rect
 
 
+def draw_pc_turn_banner(surf: pygame.Surface, state: GameState) -> None:
+    rect = pygame.Rect((L.SW - 460) // 2, 82, 460, 48)
+    banner = pygame.Surface(rect.size, pygame.SRCALPHA)
+    pygame.draw.rect(banner, (*C.BASE02, 210), banner.get_rect(), border_radius=8)
+    pygame.draw.rect(banner, (*C.TEXT_GOLD, 230), banner.get_rect(), 2, border_radius=8)
+    surf.blit(banner, rect)
+
+    label = F.get('large').render(f'{state.current_player.name} is playing', True, C.TEXT_GOLD)
+    surf.blit(label, (rect.centerx - label.get_width() // 2,
+                      rect.centery - label.get_height() // 2))
+
+
 
 def draw_game_over(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> pygame.Rect:
     _dim_screen(surf)

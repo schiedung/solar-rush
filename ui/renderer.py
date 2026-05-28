@@ -30,19 +30,24 @@ class UIRects:
 def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
     surf.blit(A.get('background', L.SW, L.SH), (0, 0))
     rects = UIRects()
+    input_mouse = (-1, -1) if state.current_player.is_ai else mouse_pos
 
     rects.token_rects = track_view.draw(surf, state)
-    slot_result = farm_view.draw(surf, state, mouse_pos)
+    slot_result = farm_view.draw(surf, state, input_mouse)
     rects.slot_rects = slot_result['unslot_rects']
     rects.hovered_card = slot_result.get('hovered_card')
-    deck_panel.draw(surf, state, mouse_pos)
-    hand_result = hand_view.draw(surf, state, mouse_pos)
+    deck_panel.draw(surf, state, input_mouse)
+    hand_result = hand_view.draw(surf, state, input_mouse)
     rects.hand_rects = hand_result['rects']
     if hand_result.get('hovered_card'):
         rects.hovered_card = hand_result['hovered_card']
 
+    if state.current_player.is_ai:
+        rects.slot_rects = {}
+        rects.hand_rects = []
+
     phase = state.phase
-    if phase == Phase.HANDOFF:
+    if phase == Phase.HANDOFF and not state.current_player.is_ai:
         rects.handoff_btn = L.FINISH_TURN_BTN
     elif phase == Phase.GAME_OVER:
         rects.play_again_btn = overlay.draw_game_over(surf, state, mouse_pos)
@@ -51,7 +56,14 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
     elif phase == Phase.TARGETING_PLAYER:
         rects.player_target_rects = overlay.draw_player_target(surf, state, mouse_pos)
 
-    if rects.hovered_card and phase in (Phase.ACTION, Phase.TARGETING_PLAYER):
+    if (
+        not state.current_player.is_ai
+        and rects.hovered_card
+        and phase in (Phase.ACTION, Phase.TARGETING_PLAYER)
+    ):
         tooltip.draw_tooltip(surf, rects.hovered_card, mouse_pos)
+
+    if state.current_player.is_ai and phase != Phase.GAME_OVER:
+        overlay.draw_pc_turn_banner(surf, state)
 
     return rects

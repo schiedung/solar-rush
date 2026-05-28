@@ -33,7 +33,8 @@ class TurnEngine:
             s.winner = winner
             s.phase = Phase.GAME_OVER
         else:
-            self.advance_to_next_player()
+            s.actions_remaining = 0
+            s.phase = Phase.HANDOFF
 
     def advance_to_next_player(self) -> None:
         s = self.state
@@ -64,6 +65,7 @@ class TurnEngine:
         if card:
             s.current_player.hand.append(card)
             s.actions_remaining -= 1
+            self._check_actions_done()
         return card
 
     # ── Play a card ───────────────────────────────────────────────────────────
@@ -138,6 +140,7 @@ class TurnEngine:
         s.selected_card = None
         s.actions_remaining -= 1
         s.phase = Phase.ACTION
+        self._check_actions_done()
         return True
 
     # ── Build ─────────────────────────────────────────────────────────────────
@@ -164,6 +167,7 @@ class TurnEngine:
             s.phase = Phase.GAME_OVER
             return True
 
+        self._check_actions_done()
         return True
 
     # ── Pass ──────────────────────────────────────────────────────────────────
@@ -173,6 +177,7 @@ class TurnEngine:
         if s.phase != Phase.ACTION or s.actions_remaining <= 0:
             return False
         s.actions_remaining -= 1
+        self._check_actions_done()
         return True
 
     # ── Research ──────────────────────────────────────────────────────────────
@@ -215,6 +220,7 @@ class TurnEngine:
         s.decks[s.research_area].put_to_bottom(rest)
         s.research_choices = []
         s.phase = Phase.ACTION
+        self._check_actions_done()
         return True
 
     # ── Unslot ────────────────────────────────────────────────────────────────
@@ -258,5 +264,9 @@ class TurnEngine:
             s.decks[card.area].discard(card)
 
         s.actions_remaining -= 1
+        self._check_actions_done()
 
-    
+    def _check_actions_done(self) -> None:
+        s = self.state
+        if s.phase == Phase.ACTION and s.actions_remaining <= 0:
+            s.phase = Phase.HANDOFF
