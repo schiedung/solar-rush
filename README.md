@@ -97,19 +97,45 @@ Or with `uv`:
 uv run main.py
 ```
 
-## Balance simulation
+## Scripts
+
+### Card browser
+
+View every card currently present in `data/cards.json`, including the same hover
+tooltip text shown in-game:
+
+```bash
+uv run scripts/view_cards.py
+```
+
+Controls:
+
+| Input | Action |
+|---|---|
+| Mouse wheel / Up / Down / PageUp / PageDown | Scroll cards |
+| 1-4 | Filter by research area |
+| 0 or A | Show all cards |
+| Esc or Q | Quit |
+
+You can start on a specific area:
+
+```bash
+uv run scripts/view_cards.py --area engineering
+```
+
+### Balance simulation
 
 Run Monte Carlo simulations against the real game engine:
 
 ```bash
-python scripts/simulate_balance.py --games 1000
+uv run scripts/simulate_balance.py --games 1000
 ```
 
 Compare specific table strategies by passing one strategy per player:
 
 ```bash
-python scripts/simulate_balance.py --games 5000 --strategies rush balanced tech engineering
-python scripts/simulate_balance.py --games 5000 --strategies balanced aggressive tech
+uv run scripts/simulate_balance.py --games 5000 --strategies rush balanced tech engineering
+uv run scripts/simulate_balance.py --games 5000 --strategies balanced aggressive tech
 ```
 
 Available strategies are `rush`, `balanced`, `tech`, `engineering`, and `aggressive`.

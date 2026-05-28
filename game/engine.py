@@ -17,9 +17,6 @@ class TurnEngine:
         p = s.current_player
         s.last_event_message = ''
 
-        if p.halved_turns > 0:
-            p.halved_turns -= 1
-
         p.blocked_areas.clear()
         p.block_build = False
 
@@ -28,8 +25,13 @@ class TurnEngine:
 
     def finish_turn(self) -> None:
         s = self.state
+        p = s.current_player
+
+        if p.halved_turns > 0:
+            p.halved_turns -= 1
+
         if s.round_number >= MAX_ROUNDS and s.current_player_idx == len(s.players) - 1:
-            winner = max(s.players, key=lambda p: p.total_output())
+            winner = max(s.players, key=lambda pl: pl.total_output())
             s.winner = winner
             s.phase = Phase.GAME_OVER
         else:
@@ -65,7 +67,6 @@ class TurnEngine:
         if card:
             s.current_player.hand.append(card)
             s.actions_remaining -= 1
-            self._check_actions_done()
         return card
 
     # ── Play a card ───────────────────────────────────────────────────────────
@@ -140,7 +141,6 @@ class TurnEngine:
         s.selected_card = None
         s.actions_remaining -= 1
         s.phase = Phase.ACTION
-        self._check_actions_done()
         return True
 
     # ── Build ─────────────────────────────────────────────────────────────────
@@ -161,13 +161,12 @@ class TurnEngine:
         )
         s.actions_remaining -= 1
 
-        winner = s.check_win()
+        winner = s.check_win(s.current_player)
         if winner:
-            s.winner = winner
+            s.winner = s.current_player
             s.phase = Phase.GAME_OVER
             return True
 
-        self._check_actions_done()
         return True
 
     # ── Pass ──────────────────────────────────────────────────────────────────
@@ -177,7 +176,6 @@ class TurnEngine:
         if s.phase != Phase.ACTION or s.actions_remaining <= 0:
             return False
         s.actions_remaining -= 1
-        self._check_actions_done()
         return True
 
     # ── Research ──────────────────────────────────────────────────────────────
@@ -220,7 +218,6 @@ class TurnEngine:
         s.decks[s.research_area].put_to_bottom(rest)
         s.research_choices = []
         s.phase = Phase.ACTION
-        self._check_actions_done()
         return True
 
     # ── Unslot ────────────────────────────────────────────────────────────────
@@ -264,9 +261,5 @@ class TurnEngine:
             s.decks[card.area].discard(card)
 
         s.actions_remaining -= 1
-        self._check_actions_done()
 
-    def _check_actions_done(self) -> None:
-        s = self.state
-        if s.phase == Phase.ACTION and s.actions_remaining <= 0:
-            s.phase = Phase.HANDOFF
+    
