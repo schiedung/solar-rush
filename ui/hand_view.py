@@ -49,7 +49,7 @@ def _draw_card(
     pygame.draw.rect(surf, bg, rect, border_radius=7)
     pygame.draw.rect(surf, border, rect, border_w, border_radius=7)
 
-    band = pygame.Rect(rect.x + border_w, rect.y + border_w, rect.width - 2 * border_w, 22)
+    band = pygame.Rect(rect.x + border_w, rect.y + border_w, rect.width - 2 * border_w, 33)
     pygame.draw.rect(surf, area_dark, band)
     area_lbl = F.get('tiny').render(C.AREA_LABEL.get(card.area, card.area), True, area_color)
     surf.blit(area_lbl, (band.x + 4, band.y + 4))
@@ -58,19 +58,19 @@ def _draw_card(
     badge_top = F.get('bold').render(badge_txt, True, C.WHITE)
     surf.blit(badge_top, (band.right - badge_top.get_width() - 4, band.y + 2))
 
-    name_y = rect.y + 28
+    name_y = rect.y + 42
     _blit_wrapped(surf, card.name, F.get('bold'), C.TEXT_MAIN, rect.x + 5, name_y, rect.width - 10, 2)
 
-    art_rect = pygame.Rect(rect.x + 6, rect.y + 58, rect.width - 12, 48)
+    art_rect = pygame.Rect(rect.x + 9, rect.y + 87, rect.width - 18, 72)
     art = A.get_card_image(card.id, art_rect.width, art_rect.height)
     surf.blit(art, art_rect)
     pygame.draw.rect(surf, area_color, art_rect, 1, border_radius=4)
 
-    desc_y = rect.y + 111
+    desc_y = rect.y + 167
     _blit_wrapped(surf, card.description, F.get('tiny'), C.TEXT_DIM, rect.x + 5, desc_y, rect.width - 10, 2)
 
     badge = F.get('bold').render(badge_txt, True, C.WHITE)
-    surf.blit(badge, (rect.centerx - badge.get_width() // 2, rect.bottom - 18))
+    surf.blit(badge, (rect.centerx - badge.get_width() // 2, rect.bottom - 27))
 
 
 def _blit_wrapped(
@@ -95,7 +95,7 @@ def _blit_wrapped(
             break
     if line and len(lines) < max_lines:
         lines.append(line)
-    lh = font.get_height() + 2
+    lh = font.get_height() + 3
     for i, ln in enumerate(lines[:max_lines]):
         surf.blit(font.render(ln, True, color), (x, y + i * lh))
 

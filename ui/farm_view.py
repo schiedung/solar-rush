@@ -7,27 +7,27 @@ import ui.fonts as F
 import ui.layout as L
 
 # ── Prototype panel geometry ─────────────────────────────────────────────────
-PROTO_X      = 34
-PROTO_Y      = L.TOPBAR_H + 20
-PROTO_W      = 342
-PROTO_H      = 336
-SLOT_Y       = PROTO_Y + 48
-SLOT_H       = 86
+PROTO_X      = 51
+PROTO_Y      = L.TOPBAR_H + 30
+PROTO_W      = 513
+PROTO_H      = 504
+SLOT_Y       = PROTO_Y + 72
+SLOT_H       = 129
 SLOT_W       = PROTO_W
-SLOT_GAP     = 8
+SLOT_GAP     = 12
 SLOT_X0      = PROTO_X
 
 SLOT_KEYS    = ('junction', 'optical', 'contact')
 SLOT_AREAS   = ('material_science', 'chemistry', 'physics')
 
 # ── Units grid geometry ───────────────────────────────────────────────────────
-UNIT_X0      = 420
-UNIT_Y0      = L.TOPBAR_H + 270
-UNIT_W, UNIT_H = 78, 58
-UNIT_GAP     = 8
+UNIT_X0      = 630
+UNIT_Y0      = L.TOPBAR_H + 405
+UNIT_W, UNIT_H = 117, 87
+UNIT_GAP     = 12
 UNITS_PER_ROW = 6
 
-_UNSLOT_W, _UNSLOT_H = 28, 18
+_UNSLOT_W, _UNSLOT_H = 42, 27
 
 
 def _unit_color(kwh: float) -> tuple:
@@ -45,8 +45,8 @@ def _slot_rect(k: int) -> pygame.Rect:
 
 def _unslot_rect(slot_rect: pygame.Rect) -> pygame.Rect:
     return pygame.Rect(
-        slot_rect.right - _UNSLOT_W - 4,
-        slot_rect.y + 4,
+        slot_rect.right - _UNSLOT_W - 6,
+        slot_rect.y + 6,
         _UNSLOT_W, _UNSLOT_H,
     )
 
@@ -83,7 +83,7 @@ def _draw_slot(
     pygame.draw.rect(surf, bg, rect, border_radius=8)
     pygame.draw.rect(surf, border, rect, border_w, border_radius=8)
 
-    accent = pygame.Rect(rect.x + border_w, rect.y + border_w, rect.width - 2*border_w, 20)
+    accent = pygame.Rect(rect.x + border_w, rect.y + border_w, rect.width - 2*border_w, 30)
     pygame.draw.rect(surf, area_dark if not has_card else area_color, accent)
 
     a_lbl = F.get('tiny').render(area_label, True, C.WHITE if has_card else C.TEXT_DIM)
@@ -95,13 +95,13 @@ def _draw_slot(
         tier = card.effect['to_tier']
         mult = tier_data[tier]['multiplier']
 
-        content_y = rect.y + 30
+        content_y = rect.y + 45
 
         name_surf = F.get('bold').render(card.name[:20], True, C.TEXT_MAIN)
-        surf.blit(name_surf, (rect.x + 8, content_y))
+        surf.blit(name_surf, (rect.x + 12, content_y))
 
         mult_surf = F.get('large').render(f'×{mult:.2f}', True, C.WHITE)
-        surf.blit(mult_surf, (rect.x + 8, content_y + 26))
+        surf.blit(mult_surf, (rect.x + 12, content_y + 39))
 
         # Unslot button
         ubtn = _unslot_rect(rect)
@@ -114,9 +114,9 @@ def _draw_slot(
         unslot_btn = ubtn
     else:
         empty = F.get('small').render('[ EMPTY ]', True, (60, 80, 120))
-        surf.blit(empty, (rect.centerx - empty.get_width() // 2, rect.centery + 4))
+        surf.blit(empty, (rect.centerx - empty.get_width() // 2, rect.centery + 6))
         hint = F.get('tiny').render(f'Play a {area_label} card', True, (50, 65, 100))
-        surf.blit(hint, (rect.centerx - hint.get_width() // 2, rect.centery + 26))
+        surf.blit(hint, (rect.centerx - hint.get_width() // 2, rect.centery + 39))
 
     return (unslot_btn, is_hovered)
 
@@ -134,7 +134,7 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict:
         f'PROTOTYPE  —  Next unit value: {kwh_out:.3f} kW',
         True, C.TEXT_GOLD,
     )
-    surf.blit(title, (proto_bg.x + 10, proto_bg.y + 12))
+    surf.blit(title, (proto_bg.x + 10, proto_bg.y + 18))
 
     tier_data_map = {
         'junction': JUNCTION_TIERS,
@@ -159,11 +159,11 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict:
         f'Bonus: ×{1.0 + p.farm_bonus:.2f}',
         True, C.TEXT_DIM,
     )
-    surf.blit(units_label, (UNIT_X0, UNIT_Y0 - 24))
+    surf.blit(units_label, (UNIT_X0, UNIT_Y0 - 36))
 
     if not p.units:
         no_units = F.get('body').render('No units built yet — use the Build action!', True, (50, 65, 100))
-        surf.blit(no_units, (UNIT_X0, UNIT_Y0 + 10))
+        surf.blit(no_units, (UNIT_X0, UNIT_Y0 + 15))
     else:
         for i, kwh in enumerate(p.units):
             rect = _unit_rect(i)
@@ -174,19 +174,19 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> dict:
             pygame.draw.rect(surf, dark, rect, border_radius=6)
             pygame.draw.rect(surf, col, rect, 2, border_radius=6)
             val = F.get('bold').render(f'{kwh:.2f}', True, C.TEXT_GOLD)
-            surf.blit(val, (rect.centerx - val.get_width() // 2, rect.y + 8))
+            surf.blit(val, (rect.centerx - val.get_width() // 2, rect.y + 12))
             lbl = F.get('tiny').render('kW', True, C.TEXT_DIM)
-            surf.blit(lbl, (rect.centerx - lbl.get_width() // 2, rect.y + 32))
+            surf.blit(lbl, (rect.centerx - lbl.get_width() // 2, rect.y + 48))
 
     if p.blocked_areas:
         blocked_txt = 'BLOCKED: ' + ', '.join(
             C.AREA_LABEL.get(a, a) for a in p.blocked_areas if a in C.AREA_LABEL
         )
         b_surf = F.get('tiny').render(blocked_txt, True, C.TEXT_RED)
-        surf.blit(b_surf, (UNIT_X0, L.TOPBAR_H + L.MAIN_H - 18))
+        surf.blit(b_surf, (UNIT_X0, L.TOPBAR_H + L.MAIN_H - 27))
 
     if p.block_build:
         bb_surf = F.get('tiny').render('GRID FAILURE — Build blocked this turn', True, C.TEXT_RED)
-        surf.blit(bb_surf, (UNIT_X0, L.TOPBAR_H + L.MAIN_H - 34))
+        surf.blit(bb_surf, (UNIT_X0, L.TOPBAR_H + L.MAIN_H - 51))
 
     return {'unslot_rects': slot_rects, 'hovered_card': hovered_card}

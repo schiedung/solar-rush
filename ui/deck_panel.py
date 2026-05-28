@@ -27,29 +27,29 @@ def _draw_button(
     pygame.draw.rect(surf, border, rect, 2, border_radius=8)
 
     pygame.draw.rect(surf, C.AREA.get(area, C.BTN_BORDER),
-                     (rect.x, rect.y, 6, rect.height), border_radius=4)
+                     (rect.x, rect.y, 9, rect.height), border_radius=4)
 
-    card_back = A.get('card_back', 34, 48)
-    stack_x = rect.right - 46
-    stack_y = rect.y + 22
-    for offset in (8, 4, 0):
-        back_rect = pygame.Rect(stack_x - offset, stack_y - offset, 34, 48)
+    card_back = A.get('card_back', 51, 72)
+    stack_x = rect.right - 69
+    stack_y = rect.y + 33
+    for offset in (12, 6, 0):
+        back_rect = pygame.Rect(stack_x - offset, stack_y - offset, 51, 72)
         surf.blit(card_back, back_rect)
         pygame.draw.rect(surf, border, back_rect, 1, border_radius=4)
 
     name_txt = C.AREA_LABEL.get(area, area)
     name_surf = F.get('bold').render(name_txt, True, C.TEXT_MAIN if available else C.TEXT_DIM)
-    surf.blit(name_surf, (rect.x + 14, rect.y + 8))
+    surf.blit(name_surf, (rect.x + 21, rect.y + 12))
 
     count_surf = F.get('small').render(f'{deck_len} cards', True, C.TEXT_DIM)
-    surf.blit(count_surf, (rect.x + 14, rect.y + 30))
+    surf.blit(count_surf, (rect.x + 21, rect.y + 45))
 
     if research_mode:
         tag = F.get('tiny').render('RESEARCH ×2', True, C.TEXT_GOLD)
-        surf.blit(tag, (rect.x + 14, rect.y + 50))
+        surf.blit(tag, (rect.x + 21, rect.y + 75))
     elif not available:
         tag = F.get('tiny').render('BLOCKED', True, C.TEXT_RED)
-        surf.blit(tag, (rect.x + 14, rect.y + 50))
+        surf.blit(tag, (rect.x + 21, rect.y + 75))
 
 
 def draw(
@@ -95,7 +95,7 @@ def draw(
 
     status = _status_text(state)
     st = F.get('small').render(status, True, C.TEXT_DIM)
-    _blit_clipped(surf, st, pygame.Rect(L.ACTION_X, L.STATUS_TEXT_Y, 310, st.get_height()))
+    _blit_clipped(surf, st, pygame.Rect(L.ACTION_X, L.STATUS_TEXT_Y, 465, st.get_height()))
 
     # Score board — current output (kW)
     y = L.SCOREBOARD_Y
@@ -106,7 +106,7 @@ def draw(
         line = F.get('body').render(
             f'{arrow}{player.name}: {player.total_output():.2f} kW', True, color
         )
-        _blit_clipped(surf, line, pygame.Rect(L.ACTION_X, y + i * 19, 310, line.get_height()))
+        _blit_clipped(surf, line, pygame.Rect(L.ACTION_X, y + i * 29, 465, line.get_height()))
 
     _draw_keybindings(surf)
 
@@ -141,11 +141,11 @@ def _blit_clipped(surf: pygame.Surface, text_surf: pygame.Surface, rect: pygame.
 
 def _draw_keybindings(surf: pygame.Surface) -> None:
     x = L.HAND_PANEL_X + L.HAND_PANEL_W + 10  # always right of hand cards
-    y = L.SH - 58
+    y = L.SH - 87
     for text in ('ESC / RMB — deselect', 'Ctrl+F  fullscreen   Ctrl+Q  quit'):
         s = F.get('tiny').render(text, True, C.TEXT_DIM)
         surf.blit(s, (x, y))
-        y += s.get_height() + 3
+        y += s.get_height() + 5
 
 
 def _status_text(state: GameState) -> str:

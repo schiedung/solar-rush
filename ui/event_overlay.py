@@ -23,7 +23,7 @@ def _panel(surf: pygame.Surface, w: int, h: int) -> pygame.Rect:
 
 
 def draw_pc_turn_banner(surf: pygame.Surface, state: GameState) -> None:
-    rect = pygame.Rect((L.SW - 460) // 2, 82, 460, 48)
+    rect = pygame.Rect((L.SW - 690) // 2, 123, 690, 72)
     banner = pygame.Surface(rect.size, pygame.SRCALPHA)
     pygame.draw.rect(banner, (*C.BASE02, 210), banner.get_rect(), border_radius=8)
     pygame.draw.rect(banner, (*C.TEXT_GOLD, 230), banner.get_rect(), 2, border_radius=8)
@@ -37,21 +37,21 @@ def draw_pc_turn_banner(surf: pygame.Surface, state: GameState) -> None:
 
 def draw_game_over(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> pygame.Rect:
     _dim_screen(surf)
-    panel = _panel(surf, 560, 380)
+    panel = _panel(surf, 840, 570)
 
     title = F.get('title').render('GAME OVER', True, C.TEXT_GOLD)
-    surf.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 24))
+    surf.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 36))
 
     if state.winner:
         win = F.get('large').render(f'{state.winner.name} wins!', True, state.winner.color)
-        surf.blit(win, (panel.centerx - win.get_width() // 2, panel.y + 72))
+        surf.blit(win, (panel.centerx - win.get_width() // 2, panel.y + 108))
 
-    y = panel.y + 116
+    y = panel.y + 174
     for i, p in enumerate(sorted(state.players, key=lambda x: -x.total_output())):
         highlight = p is state.winner
         col = p.color if highlight else C.TEXT_DIM
         rank = F.get('body').render(f'#{i+1}  {p.name}:  {p.total_output():.2f} kW', True, col)
-        surf.blit(rank, (panel.centerx - rank.get_width() // 2, y + i * 30))
+        surf.blit(rank, (panel.centerx - rank.get_width() // 2, y + i * 45))
 
     btn = L.PLAY_AGAIN_BTN
     hovered = btn.collidepoint(mouse_pos)
@@ -69,10 +69,10 @@ def draw_research_choose(
     mouse_pos: tuple,
 ) -> list[pygame.Rect]:
     _dim_screen(surf)
-    panel = _panel(surf, 700, 340)
+    panel = _panel(surf, 1050, 510)
 
     title = F.get('large').render('Research — Choose a card to keep', True, C.TEXT_MAIN)
-    surf.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 16))
+    surf.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 24))
 
     rects: list[pygame.Rect] = []
     for i, card in enumerate(state.research_choices):
@@ -86,26 +86,26 @@ def draw_research_choose(
         pygame.draw.rect(surf, border, rect, 2, border_radius=8)
 
         name_surf = F.get('bold').render(card.name, True, C.TEXT_MAIN)
-        surf.blit(name_surf, (rect.centerx - name_surf.get_width() // 2, rect.y + 12))
+        surf.blit(name_surf, (rect.centerx - name_surf.get_width() // 2, rect.y + 18))
 
         area_surf = F.get('tiny').render(
             C.AREA_LABEL.get(card.area, card.area), True, area_color
         )
-        surf.blit(area_surf, (rect.centerx - area_surf.get_width() // 2, rect.y + 36))
+        surf.blit(area_surf, (rect.centerx - area_surf.get_width() // 2, rect.y + 54))
 
         badge_surf = F.get('bold').render(_card_badge(card), True, C.WHITE)
-        surf.blit(badge_surf, (rect.centerx - badge_surf.get_width() // 2, rect.y + 52))
+        surf.blit(badge_surf, (rect.centerx - badge_surf.get_width() // 2, rect.y + 78))
 
-        art_rect = pygame.Rect(rect.x + 10, rect.y + 76, rect.width - 20, 76)
+        art_rect = pygame.Rect(rect.x + 15, rect.y + 114, rect.width - 30, 114)
         art = A.get_card_image(card.id, art_rect.width, art_rect.height)
         surf.blit(art, art_rect)
         pygame.draw.rect(surf, area_color, art_rect, 1, border_radius=5)
 
-        y_off = rect.y + 160
+        y_off = rect.y + 240
         for line in _wrap(card.description, F.get('tiny'), rect.width - 10):
             s = F.get('tiny').render(line, True, C.TEXT_DIM)
             surf.blit(s, (rect.x + 5, y_off))
-            y_off += F.get('tiny').get_height() + 2
+            y_off += F.get('tiny').get_height() + 3
 
         rects.append(rect)
 
@@ -118,17 +118,17 @@ def draw_player_target(
     mouse_pos: tuple,
 ) -> list[pygame.Rect]:
     _dim_screen(surf)
-    panel = _panel(surf, 440, 80 + len(state.players) * 60)
+    panel = _panel(surf, 660, 120 + len(state.players) * 90)
 
     title = F.get('large').render('Select Target Player', True, C.TEXT_MAIN)
-    surf.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 16))
+    surf.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 24))
 
     btns: list[pygame.Rect] = []
     for i, p in enumerate(state.players):
         if i == state.current_player_idx:
             btns.append(pygame.Rect(0, 0, 0, 0))
             continue
-        btn = pygame.Rect(panel.x + 60, panel.y + 58 + i * 60, panel.width - 120, 46)
+        btn = pygame.Rect(panel.x + 90, panel.y + 87 + i * 90, panel.width - 180, 69)
         hovered = btn.collidepoint(mouse_pos)
         pygame.draw.rect(surf, C.BTN_HOVER if hovered else C.BTN_NORMAL, btn, border_radius=8)
         pygame.draw.rect(surf, p.color, btn, 2, border_radius=8)
