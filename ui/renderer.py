@@ -53,13 +53,17 @@ def draw(surf: pygame.Surface, state: GameState, mouse_pos: tuple) -> UIRects:
         rects.play_again_btn = overlay.draw_game_over(surf, state, mouse_pos)
     elif phase == Phase.RESEARCH_CHOOSE:
         rects.research_rects = overlay.draw_research_choose(surf, state, mouse_pos)
+        for i, research_rect in enumerate(rects.research_rects):
+            if research_rect.collidepoint(mouse_pos) and i < len(state.research_choices):
+                rects.hovered_card = state.research_choices[i]
+                break
     elif phase == Phase.TARGETING_PLAYER:
         rects.player_target_rects = overlay.draw_player_target(surf, state, mouse_pos)
 
     if (
         not state.current_player.is_ai
         and rects.hovered_card
-        and phase in (Phase.ACTION, Phase.TARGETING_PLAYER)
+        and phase in (Phase.ACTION, Phase.HANDOFF, Phase.RESEARCH_CHOOSE, Phase.TARGETING_PLAYER)
     ):
         tooltip.draw_tooltip(surf, rects.hovered_card, mouse_pos)
 
