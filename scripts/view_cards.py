@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import pygame
@@ -48,6 +49,24 @@ AREA_KEYS = {
 }
 
 
+@dataclass(frozen=True)
+class CardListing:
+    card: Card
+    count: int
+
+
+def card_type_key(card: Card) -> tuple[str, int, str, str, str, str]:
+    effect_key = json.dumps(card.effect, sort_keys=True)
+    return (
+        card.area,
+        card.tier,
+        card.name,
+        card.description,
+        card.long_description,
+        effect_key,
+    )
+
+
 def load_cards() -> list[Card]:
     path = ROOT / "data" / "cards.json"
     raw = json.loads(path.read_text(encoding="utf-8"))
@@ -55,10 +74,27 @@ def load_cards() -> list[Card]:
     return sorted(cards, key=lambda c: (AREAS.index(c.area), c.tier, c.id))
 
 
-def filtered_cards(cards: list[Card], area_filter: str | None) -> list[Card]:
+def unique_card_listings(cards: list[Card]) -> list[CardListing]:
+    cards_by_key: dict[tuple[str, int, str, str, str, str], Card] = {}
+    counts_by_key: dict[tuple[str, int, str, str, str, str], int] = {}
+    for card in cards:
+        key = card_type_key(card)
+        cards_by_key.setdefault(key, card)
+        counts_by_key[key] = counts_by_key.get(key, 0) + 1
+
+    return [
+        CardListing(card=card, count=counts_by_key[key])
+        for key, card in sorted(
+            cards_by_key.items(),
+            key=lambda item: (AREAS.index(item[1].area), item[1].tier, item[1].id),
+        )
+    ]
+
+
+def filtered_cards(cards: list[CardListing], area_filter: str | None) -> list[CardListing]:
     if area_filter is None:
         return cards
-    return [card for card in cards if card.area == area_filter]
+    return [listing for listing in cards if listing.card.area == area_filter]
 
 
 def max_scroll_for(count: int) -> int:
@@ -72,14 +108,20 @@ def max_scroll_for(count: int) -> int:
 def draw_header(
     surf: pygame.Surface,
     area_filter: str | None,
-    visible_count: int,
-    total_count: int,
+    visible_types: int,
+    visible_cards: int,
+    total_types: int,
+    total_cards: int,
 ) -> None:
     pygame.draw.rect(surf, C.TOPBAR_BG, pygame.Rect(0, 0, WINDOW_W, TOP_H))
     title = F.get("large").render("Solar Rush Card Browser", True, C.WHITE)
     surf.blit(title, (MARGIN, 10))
 
-    count = F.get("small").render(f"{visible_count} / {total_count} cards", True, C.TEXT_DIM)
+    count = F.get("small").render(
+        f"{visible_types} / {total_types} types  |  {visible_cards} / {total_cards} cards",
+        True,
+        C.TEXT_DIM,
+    )
     surf.blit(count, (title.get_rect(x=MARGIN, y=10).right + 18, 20))
 
     x = WINDOW_W - 746
@@ -112,15 +154,16 @@ def draw_filter_label(
 
 def draw_cards(
     surf: pygame.Surface,
-    cards: list[Card],
+    cards: list[CardListing],
     scroll_y: int,
     mouse_pos: tuple[int, int],
 ) -> Card | None:
     cols = max(1, (WINDOW_W - 2 * MARGIN + GAP_X) // (CARD_W + GAP_X))
     hovered_card = None
 
-    for idx, card in enumerate(cards):
+    for idx, listing in enumerate(cards):
         row, col = divmod(idx, cols)
+        card = listing.card
         x = MARGIN + col * (CARD_W + GAP_X)
         y = TOP_H + MARGIN + row * (CARD_H + GAP_Y) - scroll_y
         rect = pygame.Rect(x, y, CARD_W, CARD_H)
@@ -129,7 +172,7 @@ def draw_cards(
             continue
 
         hovered = rect.collidepoint(mouse_pos)
-        draw_browser_card(surf, card, rect, hovered)
+        draw_browser_card(surf, card, listing.count, rect, hovered)
         if hovered:
             hovered_card = card
 
@@ -139,6 +182,7 @@ def draw_cards(
 def draw_browser_card(
     surf: pygame.Surface,
     card: Card,
+    count: int,
     rect: pygame.Rect,
     hovered: bool,
 ) -> None:
@@ -161,6 +205,17 @@ def draw_browser_card(
     badge_top = F.get("bold").render(badge_txt, True, C.WHITE)
     surf.blit(badge_top, (band.right - badge_top.get_width() - 6, band.y + 2))
 
+    if count > 1:
+        count_txt = F.get("tiny").render(f"x{count}", True, C.WHITE)
+        count_rect = pygame.Rect(
+            rect.right - count_txt.get_width() - 16,
+            rect.y + 39,
+            count_txt.get_width() + 10,
+            21,
+        )
+        pygame.draw.rect(surf, area_color, count_rect, border_radius=5)
+        surf.blit(count_txt, (count_rect.x + 5, count_rect.y + 3))
+
     _blit_wrapped(surf, card.name, F.get("bold"), C.TEXT_MAIN, rect.x + 8, rect.y + 46, rect.width - 16, 2)
 
     art_rect = pygame.Rect(rect.x + 12, rect.y + 116, rect.width - 24, 92)
@@ -176,15 +231,17 @@ def draw_browser_card(
 
 def draw(
     surf: pygame.Surface,
-    all_cards: list[Card],
+    all_cards: list[CardListing],
+    total_cards: int,
     area_filter: str | None,
     scroll_y: int,
     mouse_pos: tuple[int, int],
 ) -> None:
     cards = filtered_cards(all_cards, area_filter)
+    visible_cards = sum(listing.count for listing in cards)
     surf.fill(C.BG)
     hovered_card = draw_cards(surf, cards, scroll_y, mouse_pos)
-    draw_header(surf, area_filter, len(cards), len(all_cards))
+    draw_header(surf, area_filter, len(cards), visible_cards, len(all_cards), total_cards)
     if hovered_card is not None:
         draw_tooltip(surf, hovered_card, mouse_pos)
 
@@ -222,12 +279,20 @@ def main() -> None:
     A.load()
 
     cards = load_cards()
+    card_listings = unique_card_listings(cards)
     area_filter = args.area
     scroll_y = 0
 
     if args.screenshot:
         surf = pygame.Surface((WINDOW_W, WINDOW_H))
-        draw(surf, cards, area_filter, scroll_y, (MARGIN + 12, TOP_H + MARGIN + 12))
+        draw(
+            surf,
+            card_listings,
+            len(cards),
+            area_filter,
+            scroll_y,
+            (MARGIN + 12, TOP_H + MARGIN + 12),
+        )
         pygame.image.save(surf, args.screenshot)
         return
 
@@ -237,7 +302,7 @@ def main() -> None:
 
     running = True
     while running:
-        visible_cards = filtered_cards(cards, area_filter)
+        visible_cards = filtered_cards(card_listings, area_filter)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -248,10 +313,10 @@ def main() -> None:
                     running = False
                 elif event.key in (pygame.K_0, pygame.K_a):
                     area_filter = None
-                    scroll_y = clamp_scroll(scroll_y, len(filtered_cards(cards, area_filter)))
+                    scroll_y = clamp_scroll(scroll_y, len(filtered_cards(card_listings, area_filter)))
                 elif event.key in AREA_KEYS:
                     area_filter = AREA_KEYS[event.key]
-                    scroll_y = clamp_scroll(scroll_y, len(filtered_cards(cards, area_filter)))
+                    scroll_y = clamp_scroll(scroll_y, len(filtered_cards(card_listings, area_filter)))
                 elif event.key == pygame.K_DOWN:
                     scroll_y = clamp_scroll(scroll_y + 58, len(visible_cards))
                 elif event.key == pygame.K_UP:
@@ -263,7 +328,7 @@ def main() -> None:
 
         mouse_pos = scale_mouse(pygame.mouse.get_pos(), screen.get_size())
         logical = pygame.Surface((WINDOW_W, WINDOW_H))
-        draw(logical, cards, area_filter, scroll_y, mouse_pos)
+        draw(logical, card_listings, len(cards), area_filter, scroll_y, mouse_pos)
         pygame.transform.smoothscale(logical, screen.get_size(), screen)
         pygame.display.flip()
         clock.tick(60)
